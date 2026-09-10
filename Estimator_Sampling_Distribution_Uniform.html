@@ -1,0 +1,1692 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A guided simulation comparing two estimators of the endpoint of a uniform distribution.">
+  <title>Estimator Sampling Distributions — Uniform Endpoint</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #0b1f33;
+      --ink-soft: #526579;
+      --paper: #f5f7fa;
+      --surface: #ffffff;
+      --surface-soft: #edf2f7;
+      --oxford: #002147;
+      --oxford-deep: #00152e;
+      --blue: #3973a1;
+      --blue-soft: #dce8f2;
+      --slate-blue: #708ba5;
+      --line: #d7e0e8;
+      --grid: #e9eef3;
+      --danger: #a33b49;
+      --focus: #1f6fa8;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    button:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px var(--focus);
+    }
+
+    .page-shell {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      padding: clamp(30px, 5vw, 62px) clamp(14px, 3vw, 42px) 48px;
+    }
+
+    .hero {
+      max-width: 790px;
+      padding-bottom: clamp(26px, 4vw, 42px);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 14px;
+      color: var(--oxford);
+      font-size: clamp(2.35rem, 4.5vw, 4rem);
+      font-weight: 750;
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+
+    .hero p {
+      max-width: 700px;
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: clamp(0.98rem, 1.4vw, 1.08rem);
+    }
+
+    .lesson {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel,
+    .reveal-section {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .reveal-section {
+      padding: clamp(21px, 3vw, 30px);
+      animation: reveal 240ms ease-out;
+    }
+
+    .reveal-section[hidden] {
+      display: none;
+    }
+
+    @keyframes reveal {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-heading {
+      max-width: 790px;
+      margin-bottom: 20px;
+    }
+
+    .section-heading h2,
+    .panel-title {
+      margin-bottom: 7px;
+      color: var(--oxford);
+      font-size: clamp(1.2rem, 2vw, 1.48rem);
+      font-weight: 720;
+      letter-spacing: -0.025em;
+    }
+
+    .section-heading p,
+    .panel-subtitle {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .problem-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .problem-layout .section-heading {
+      margin-bottom: 0;
+    }
+
+    .math-display {
+      width: 100%;
+      min-width: 0;
+      padding: 14px 18px;
+      border-left: 3px solid var(--oxford);
+      background: var(--surface-soft);
+      color: var(--oxford);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.25rem, 2vw, 1.65rem);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .iid-relation {
+      position: relative;
+      display: inline-block;
+      margin-inline: 0.18em;
+      padding-top: 0.45em;
+      line-height: 0.8;
+    }
+
+    .iid-relation::before {
+      position: absolute;
+      top: -0.18em;
+      left: 50%;
+      content: "iid";
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 0.46em;
+      font-style: normal;
+      line-height: 1;
+      transform: translateX(-50%);
+    }
+
+    .estimator-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .estimator {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+
+    .estimator-label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--ink-soft);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .estimator-math {
+      margin-bottom: 5px;
+      color: var(--oxford);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.75rem;
+    }
+
+    .estimator p {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.84rem;
+    }
+
+    .experiment-workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    #sample-section[data-sampling-visible="true"] .experiment-workspace {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(190px, 0.72fr);
+      gap: 10px;
+    }
+
+    #sample-section[data-sampling-visible="true"] .chart-panel,
+    #sample-section[data-sampling-visible="true"] .table-panel {
+      padding: 12px;
+    }
+
+    .chart-panel,
+    .table-panel {
+      min-width: 0;
+      padding: 20px;
+    }
+
+    .chart-panel {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+
+    .chart-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 7px 12px;
+      margin-bottom: 8px;
+    }
+
+    .chart-header h3 {
+      margin-bottom: 3px;
+      color: var(--oxford);
+      font-size: 1rem;
+    }
+
+    .chart-header p,
+    .record-count {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.76rem;
+    }
+
+    .current-values {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 6px;
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+    }
+
+    .current-values strong {
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .key {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .key-mark {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    .key-mark.maximum {
+      border-radius: 1px;
+      background: var(--slate-blue);
+      transform: rotate(45deg);
+    }
+
+    .key-mark.truth {
+      width: 2px;
+      height: 13px;
+      border-radius: 0;
+      background: var(--oxford);
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      min-height: 0;
+    }
+
+    .sampling-chart-wrap {
+      min-height: 0;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .plot-background {
+      fill: #fff;
+      stroke: var(--line);
+      stroke-width: 1;
+    }
+
+    .grid-line {
+      stroke: var(--grid);
+      stroke-width: 1;
+    }
+
+    .axis-line {
+      stroke: #8a9bae;
+      stroke-width: 1;
+    }
+
+    .axis-text {
+      fill: var(--ink-soft);
+      font-family: Inter, ui-sans-serif, sans-serif;
+      font-size: 11px;
+    }
+
+    .axis-title {
+      fill: var(--ink);
+      font-family: Inter, ui-sans-serif, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .raw-bar {
+      fill: rgba(0, 33, 71, 0.7);
+      stroke: #fff;
+      stroke-width: 1;
+    }
+
+    .mean-bar {
+      fill: rgba(57, 115, 161, 0.56);
+      stroke: #fff;
+      stroke-width: 1;
+    }
+
+    .max-bar {
+      fill: rgba(112, 139, 165, 0.62);
+      stroke: #fff;
+      stroke-width: 1;
+    }
+
+    .mean-marker {
+      fill: var(--blue);
+      stroke: #fff;
+      stroke-width: 1.5;
+    }
+
+    .max-marker {
+      fill: var(--slate-blue);
+      stroke: #fff;
+      stroke-width: 1.5;
+    }
+
+    .truth-line {
+      stroke: var(--oxford);
+      stroke-width: 2;
+      stroke-dasharray: 4 4;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .theory-curve {
+      fill: none;
+      stroke: var(--oxford);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .theory-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink-soft);
+      font-size: 0.74rem;
+    }
+
+    .theory-label[hidden] {
+      display: none;
+    }
+
+    .theory-swatch {
+      width: 20px;
+      border-top: 3px solid var(--oxford);
+    }
+
+    .table-panel {
+      display: flex;
+      min-height: 0;
+      flex-direction: column;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+
+    .table-wrap {
+      max-height: 365px;
+      overflow: auto;
+      border-top: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.79rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th,
+    td {
+      padding: 8px 7px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--surface);
+      color: var(--ink-soft);
+      font-size: 0.7rem;
+      letter-spacing: 0.025em;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    tr.current-row td {
+      background: var(--blue-soft);
+      color: var(--oxford);
+      font-weight: 700;
+    }
+
+    .sample-message,
+    .plan-note {
+      margin: 16px 0 0;
+      padding: 14px 16px;
+      border-left: 3px solid var(--blue);
+      background: var(--surface-soft);
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .sample-message strong,
+    .plan-note strong {
+      color: var(--ink);
+    }
+
+    .workspace-status {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.85fr);
+      align-items: center;
+      gap: 12px 24px;
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--blue);
+      background: var(--surface-soft);
+    }
+
+    .workspace-status[hidden] {
+      display: none;
+    }
+
+    .workspace-status h2 {
+      margin-bottom: 2px;
+      color: var(--oxford);
+      font-size: 0.96rem;
+    }
+
+    .workspace-status p {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+    }
+
+    .manual-note {
+      text-align: right;
+    }
+
+    .manual-note strong {
+      color: var(--ink);
+    }
+
+    .automation-progress {
+      min-width: 0;
+    }
+
+    .simulation-spec {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 22px;
+      margin-top: 14px;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
+    }
+
+    .simulation-spec strong {
+      color: var(--oxford);
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .shared-scale-note {
+      margin: 10px 0 0;
+      color: var(--ink-soft);
+      font-size: 0.74rem;
+      text-align: right;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .progress-row strong {
+      color: var(--oxford);
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-row span {
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+    }
+
+    .progress {
+      height: 8px;
+      margin-top: 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-soft);
+    }
+
+    .progress-bar {
+      width: 3%;
+      height: 100%;
+      background: var(--oxford);
+      transition: width 90ms linear;
+    }
+
+    .final-analysis {
+      margin-top: 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .final-analysis[hidden] {
+      display: none;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .analysis-item {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--ink-soft);
+      font-size: 0.84rem;
+    }
+
+    .analysis-item h3 {
+      margin-bottom: 6px;
+      color: var(--oxford);
+      font-size: 0.94rem;
+    }
+
+    .analysis-item p {
+      margin-bottom: 0;
+    }
+
+    .closer-summary {
+      margin-bottom: 18px;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .closer-summary strong {
+      color: var(--ink);
+    }
+
+    .step-nav {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 0;
+    }
+
+    .step-count {
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 43px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--oxford);
+      border-radius: 9px;
+      padding: 9px 16px;
+      background: var(--oxford);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.84rem;
+      font-weight: 700;
+      transition: background 160ms ease;
+    }
+
+    .button:hover {
+      background: var(--oxford-deep);
+    }
+
+    .button.secondary {
+      justify-self: start;
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--oxford);
+    }
+
+    .button.secondary:hover {
+      background: var(--surface-soft);
+    }
+
+    .button.next {
+      justify-self: end;
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.42;
+    }
+
+    .button[hidden] {
+      display: none;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    #page-shell[data-repetition-mode="true"] {
+      padding-top: 12px;
+      padding-bottom: 24px;
+    }
+
+    #page-shell[data-repetition-mode="true"] .hero,
+    #page-shell[data-repetition-mode="true"] #problem-section,
+    #page-shell[data-repetition-mode="true"] #estimators-section,
+    #page-shell[data-repetition-mode="true"] #plan-section,
+    #page-shell[data-repetition-mode="true"] #sample-section > .section-heading,
+    #page-shell[data-repetition-mode="true"] #sample-message {
+      display: none;
+    }
+
+    #page-shell[data-repetition-mode="true"] .lesson {
+      gap: 10px;
+    }
+
+    #page-shell[data-repetition-mode="true"] #sample-section {
+      padding: 12px;
+    }
+
+    @media (max-width: 1120px) {
+      #sample-section[data-sampling-visible="true"] .experiment-workspace {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      #sample-section[data-sampling-visible="true"] .table-panel {
+        grid-column: 1 / -1;
+      }
+
+      #sample-section[data-sampling-visible="true"] .table-wrap {
+        max-height: 110px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page-shell {
+        padding-inline: 13px;
+      }
+
+      .estimator-grid,
+      .analysis-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .math-display {
+        min-width: 0;
+        width: 100%;
+        white-space: normal;
+      }
+
+      .chart-panel,
+      .table-panel {
+        padding: 15px 12px;
+      }
+
+      .chart-header,
+      .progress-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .experiment-workspace,
+      #sample-section[data-sampling-visible="true"] .experiment-workspace {
+        grid-template-columns: 1fr;
+      }
+
+      #sample-section[data-sampling-visible="true"] .table-panel {
+        grid-column: auto;
+      }
+
+      .workspace-status {
+        grid-template-columns: 1fr;
+      }
+
+      .manual-note {
+        text-align: left;
+      }
+
+      .step-nav {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .step-count {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      .button.secondary {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .button.next {
+        grid-column: 2;
+        grid-row: 2;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell" id="page-shell">
+    <header class="hero">
+      <h1>Estimator sampling distributions</h1>
+      <p>Follow repeated samples from a uniform population to compare two ways of estimating its unknown upper endpoint.</p>
+    </header>
+
+    <main class="lesson">
+      <section class="reveal-section" id="problem-section" aria-labelledby="problem-heading">
+        <div class="problem-layout">
+          <div class="section-heading">
+            <h2 id="problem-heading">The problem</h2>
+            <p>A source generates independent observations from a uniform distribution. The right endpoint, θ, is unknown. How should we estimate it?</p>
+          </div>
+          <div class="math-display" aria-label="X one through X n are independent and identically distributed as Uniform zero to theta; theta is unknown">
+            X<sub>1</sub>, …, X<sub>n</sub> <span class="iid-relation">∼</span> Uniform(0, θ), &nbsp;θ unknown
+          </div>
+        </div>
+      </section>
+
+      <section class="reveal-section" id="estimators-section" aria-labelledby="estimators-heading" hidden>
+        <div class="section-heading">
+          <h2 id="estimators-heading">Two estimators</h2>
+          <p>From one sample X<sub>1</sub>, …, X<sub>n</sub> with n = 50, we will compare a rescaled average with the largest observation.</p>
+        </div>
+        <div class="estimator-grid">
+          <article class="estimator">
+            <span class="estimator-label">Estimator A</span>
+            <div class="estimator-math">2X̄</div>
+            <p>The sample average estimates θ/2, so doubling it targets θ.</p>
+          </article>
+          <article class="estimator">
+            <span class="estimator-label">Estimator B</span>
+            <div class="estimator-math">X<sub>(n)</sub> := max{X<sub>i</sub>}</div>
+            <p>The largest observation uses the sample point nearest the unknown endpoint.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="reveal-section" id="sample-section" aria-labelledby="sample-heading" hidden>
+        <div class="section-heading">
+          <h2 id="sample-heading">One sample from the source</h2>
+          <p id="truth-copy">The source endpoint is now revealed.</p>
+        </div>
+
+        <section class="workspace-status manual-status" id="manual-section" aria-labelledby="manual-heading" hidden>
+          <div>
+            <h2 id="manual-heading">Record the next repetition</h2>
+            <p id="manual-copy">A new sample has been generated and both estimates have been added.</p>
+          </div>
+          <p class="manual-note" id="manual-note" role="status"></p>
+        </section>
+
+        <section class="workspace-status automation-status" id="automation-section" aria-labelledby="automation-heading" hidden>
+          <div class="automation-copy-block">
+            <h2 id="automation-heading">Complete the simulation</h2>
+            <p id="automation-copy">Generating the remaining repetitions and updating all three histograms in real time.</p>
+          </div>
+          <div class="automation-progress">
+            <div class="progress-row">
+              <strong id="progress-value">3 / 100 repetitions</strong>
+              <span id="progress-time">About 10 seconds remaining</span>
+            </div>
+            <div class="progress" id="simulation-progress" role="progressbar" aria-label="Simulation repetitions completed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="3">
+              <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <p class="sr-only" id="simulation-announcement" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <div class="experiment-workspace" id="experiment-workspace">
+          <section class="chart-panel current-sample-panel" aria-labelledby="data-chart-heading">
+            <div class="chart-header">
+              <div>
+                <h3 id="data-chart-heading">Current sample</h3>
+                <p>n = 50 observations</p>
+              </div>
+              <span class="record-count" id="current-repetition">Repetition 1</span>
+            </div>
+            <div class="current-values" aria-label="Current estimates and true endpoint">
+              <span class="key"><span class="key-mark" aria-hidden="true"></span>2X̄ <strong id="current-mean-estimate">—</strong></span>
+              <span class="key"><span class="key-mark maximum" aria-hidden="true"></span>X<sub>(n)</sub> <strong id="current-max-estimate">—</strong></span>
+              <span class="key"><span class="key-mark truth" aria-hidden="true"></span>θ <strong id="current-theta">—</strong></span>
+            </div>
+            <div class="chart-wrap" id="data-chart-wrap">
+              <svg id="data-chart" role="img" aria-labelledby="data-chart-heading data-chart-description"></svg>
+              <p class="sr-only" id="data-chart-description"></p>
+            </div>
+          </section>
+
+          <section class="chart-panel sampling-panel" id="mean-sampling-panel" aria-labelledby="mean-sampling-heading" hidden>
+            <div class="chart-header">
+              <div>
+                <h3 id="mean-sampling-heading">Sampling distribution of 2X̄</h3>
+                <p id="mean-record-label">1 recorded estimate</p>
+              </div>
+              <span class="theory-label" id="mean-theory-label" hidden><span class="theory-swatch" aria-hidden="true"></span>Theoretical density</span>
+            </div>
+            <div class="chart-wrap sampling-chart-wrap" id="mean-chart-wrap">
+              <svg id="mean-chart" role="img" aria-labelledby="mean-sampling-heading mean-chart-description"></svg>
+              <p class="sr-only" id="mean-chart-description"></p>
+            </div>
+          </section>
+
+          <section class="chart-panel sampling-panel" id="max-sampling-panel" aria-labelledby="max-sampling-heading" hidden>
+            <div class="chart-header">
+              <div>
+                <h3 id="max-sampling-heading">Sampling distribution of X<sub>(n)</sub></h3>
+                <p id="max-record-label">1 recorded estimate</p>
+              </div>
+              <span class="theory-label" id="max-theory-label" hidden><span class="theory-swatch" aria-hidden="true"></span>Theoretical density</span>
+            </div>
+            <div class="chart-wrap sampling-chart-wrap" id="max-chart-wrap">
+              <svg id="max-chart" role="img" aria-labelledby="max-sampling-heading max-chart-description"></svg>
+              <p class="sr-only" id="max-chart-description"></p>
+            </div>
+          </section>
+
+          <section class="table-panel" aria-labelledby="records-heading">
+            <div class="chart-header">
+              <div>
+                <h3 id="records-heading">Recorded estimates</h3>
+                <p>One row per sample</p>
+              </div>
+              <span class="record-count" id="record-count">1 / 100</span>
+            </div>
+            <div class="table-wrap" id="table-wrap">
+              <table>
+                <caption class="sr-only">Recorded values of twice the sample mean and the sample maximum for each repetition</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Rep.</th>
+                    <th scope="col">2X̄</th>
+                    <th scope="col">X<sub>(n)</sub></th>
+                  </tr>
+                </thead>
+                <tbody id="records-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <p class="sample-message" id="sample-message"></p>
+
+        <section class="final-analysis" id="final-analysis" aria-labelledby="analysis-heading" hidden>
+          <div class="section-heading">
+            <h2 id="analysis-heading">What the 100 repetitions show</h2>
+            <p>The exact theoretical density is now overlaid on each estimator histogram. Sampling distributions describe the long-run behavior that a single sample cannot reveal.</p>
+          </div>
+          <div class="analysis-grid">
+            <article class="analysis-item">
+              <h3>2X̄: unbiased, but wider</h3>
+              <p id="mean-analysis"></p>
+            </article>
+            <article class="analysis-item">
+              <h3>X<sub>(n)</sub>: biased, but concentrated</h3>
+              <p id="max-analysis"></p>
+            </article>
+          </div>
+          <p class="closer-summary" id="closer-summary"></p>
+          <button class="button" id="retry-button" type="button">Retry with a new source</button>
+        </section>
+      </section>
+
+      <section class="reveal-section" id="plan-section" aria-labelledby="plan-heading" hidden>
+        <div class="section-heading">
+          <h2 id="plan-heading">Build the sampling distributions</h2>
+          <p>We will simulate m = 100 independent copies of the dataset, each with n = 50, record both estimates, and build their histograms one repetition at a time.</p>
+          <div class="simulation-spec" aria-label="Simulation settings">
+            <span>Sample size <strong>n = 50</strong></span>
+            <span>Repetitions <strong>m = 100</strong></span>
+            <span>Same source <strong id="source-spec">θ = —</strong></span>
+          </div>
+        </div>
+        <p class="shared-scale-note">The two estimator histograms use the same horizontal scale.</p>
+        <p class="plan-note"><strong>Watch the accumulation:</strong> the current data histogram will change each time, while each estimator histogram keeps every recorded estimate.</p>
+      </section>
+
+      <nav class="step-nav" aria-label="Experiment navigation">
+        <button class="button secondary" id="back-button" type="button" disabled>Back</button>
+        <span class="step-count" id="step-count" aria-live="polite">Step 1 of 7</span>
+        <button class="button next" id="next-button" type="button">Continue</button>
+      </nav>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var N = 50;
+      var M = 100;
+      var DATA_BIN_COUNT = 12;
+      var ESTIMATOR_BIN_COUNT = 2 * DATA_BIN_COUNT;
+      var AUTO_DELAY_MS = 100;
+      var sessionSeed = createSessionSeed();
+      var sourceRng = mulberry32(sessionSeed ^ 0xA341316C);
+      var sampleRng = mulberry32(sessionSeed ^ 0xC8013EA4);
+
+      var theta = 10;
+      var repetitions = [];
+      var currentStep = 0;
+      var autoTimer = null;
+      var autoComplete = false;
+      var resizeFrame = null;
+
+      var pageShell = document.getElementById("page-shell");
+      var estimatorsSection = document.getElementById("estimators-section");
+      var sampleSection = document.getElementById("sample-section");
+      var planSection = document.getElementById("plan-section");
+      var manualSection = document.getElementById("manual-section");
+      var automationSection = document.getElementById("automation-section");
+      var meanSamplingPanel = document.getElementById("mean-sampling-panel");
+      var maxSamplingPanel = document.getElementById("max-sampling-panel");
+      var finalAnalysis = document.getElementById("final-analysis");
+      var backButton = document.getElementById("back-button");
+      var nextButton = document.getElementById("next-button");
+      var retryButton = document.getElementById("retry-button");
+      var stepCount = document.getElementById("step-count");
+      var truthCopy = document.getElementById("truth-copy");
+      var sampleMessage = document.getElementById("sample-message");
+      var manualCopy = document.getElementById("manual-copy");
+      var manualNote = document.getElementById("manual-note");
+      var sourceSpec = document.getElementById("source-spec");
+      var currentRepetition = document.getElementById("current-repetition");
+      var currentMeanEstimate = document.getElementById("current-mean-estimate");
+      var currentMaxEstimate = document.getElementById("current-max-estimate");
+      var currentTheta = document.getElementById("current-theta");
+      var recordCount = document.getElementById("record-count");
+      var recordsBody = document.getElementById("records-body");
+      var tableWrap = document.getElementById("table-wrap");
+      var meanRecordLabel = document.getElementById("mean-record-label");
+      var maxRecordLabel = document.getElementById("max-record-label");
+      var meanTheoryLabel = document.getElementById("mean-theory-label");
+      var maxTheoryLabel = document.getElementById("max-theory-label");
+      var progressValue = document.getElementById("progress-value");
+      var progressTime = document.getElementById("progress-time");
+      var progressBar = document.getElementById("progress-bar");
+      var simulationProgress = document.getElementById("simulation-progress");
+      var simulationAnnouncement = document.getElementById("simulation-announcement");
+      var automationCopy = document.getElementById("automation-copy");
+      var meanAnalysis = document.getElementById("mean-analysis");
+      var maxAnalysis = document.getElementById("max-analysis");
+      var closerSummary = document.getElementById("closer-summary");
+      var dataChartWrap = document.getElementById("data-chart-wrap");
+      var meanChartWrap = document.getElementById("mean-chart-wrap");
+      var maxChartWrap = document.getElementById("max-chart-wrap");
+      var dataChart = document.getElementById("data-chart");
+      var meanChart = document.getElementById("mean-chart");
+      var maxChart = document.getElementById("max-chart");
+      var dataChartDescription = document.getElementById("data-chart-description");
+      var meanChartDescription = document.getElementById("mean-chart-description");
+      var maxChartDescription = document.getElementById("max-chart-description");
+
+      function createSessionSeed() {
+        try {
+          if (globalThis.crypto && globalThis.crypto.getRandomValues) {
+            var values = new Uint32Array(1);
+            globalThis.crypto.getRandomValues(values);
+            return values[0];
+          }
+        } catch (error) {
+          // Fall through to a time-based seed.
+        }
+        return (Date.now() ^ Math.floor(Math.random() * 0x100000000)) >>> 0;
+      }
+
+      function mulberry32(seed) {
+        var state = seed >>> 0;
+        return function () {
+          state += 0x6D2B79F5;
+          var value = state;
+          value = Math.imul(value ^ (value >>> 15), value | 1);
+          value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+          return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function randomBetween(minimum, maximum, rng) {
+        return minimum + (maximum - minimum) * rng();
+      }
+
+      function randomTheta(excludedValue) {
+        var candidate = Math.round(randomBetween(6, 12, sourceRng) * 10) / 10;
+        if (candidate === excludedValue) {
+          candidate = candidate >= 12 ? 11.9 : Math.round((candidate + 0.1) * 10) / 10;
+        }
+        return candidate;
+      }
+
+      function formatNumber(value, digits) {
+        var places = digits === undefined ? 3 : digits;
+        return Number(value).toLocaleString(undefined, {
+          minimumFractionDigits: places,
+          maximumFractionDigits: places
+        }).replace("-", "−");
+      }
+
+      function formatAxis(value) {
+        var absolute = Math.abs(value);
+        if (absolute >= 1000 || (absolute > 0 && absolute < 0.01)) {
+          return value.toExponential(1).replace("-", "−");
+        }
+        return value.toLocaleString(undefined, {
+          maximumFractionDigits: absolute >= 10 ? 1 : 2
+        }).replace("-", "−");
+      }
+
+      function mean(values) {
+        return values.reduce(function (sum, value) { return sum + value; }, 0) / values.length;
+      }
+
+      function variance(values) {
+        var center = mean(values);
+        return values.reduce(function (sum, value) {
+          return sum + Math.pow(value - center, 2);
+        }, 0) / values.length;
+      }
+
+      function generateRepetition() {
+        var data = Array.from({ length: N }, function () {
+          return sampleRng() * theta;
+        });
+        var maximum = Math.max.apply(null, data);
+        return {
+          data: data,
+          meanEstimate: 2 * mean(data),
+          maxEstimate: maximum
+        };
+      }
+
+      function ensureRepetition(index) {
+        while (repetitions.length <= index) {
+          repetitions.push(generateRepetition());
+        }
+      }
+
+      function visibleCount() {
+        if (currentStep < 2) return 0;
+        if (currentStep <= 3) return 1;
+        if (currentStep === 4) return 2;
+        if (currentStep === 5) return 3;
+        return repetitions.length;
+      }
+
+      function closerEstimator(repetition) {
+        var meanError = Math.abs(repetition.meanEstimate - theta);
+        var maxError = Math.abs(repetition.maxEstimate - theta);
+        if (Math.abs(meanError - maxError) < 1e-12) return "Tie";
+        return meanError < maxError ? "2X̄" : "X(n)";
+      }
+
+      function renderStep(scrollTarget) {
+        var showSamplingCharts = currentStep >= 3;
+        pageShell.setAttribute("data-repetition-mode", currentStep >= 4 ? "true" : "false");
+        sampleSection.setAttribute("data-sampling-visible", showSamplingCharts ? "true" : "false");
+        estimatorsSection.hidden = currentStep < 1;
+        sampleSection.hidden = currentStep < 2;
+        planSection.hidden = currentStep < 3;
+        manualSection.hidden = currentStep < 4 || currentStep > 5;
+        automationSection.hidden = currentStep < 6;
+        meanSamplingPanel.hidden = !showSamplingCharts;
+        maxSamplingPanel.hidden = !showSamplingCharts;
+        backButton.disabled = currentStep === 0;
+        nextButton.hidden = currentStep === 6;
+        stepCount.textContent = "Step " + (currentStep + 1) + " of 7";
+
+        var labels = [
+          "Continue",
+          "Draw the first sample",
+          "Continue",
+          "Generate repetition 2",
+          "Generate repetition 3",
+          "Run remaining 97"
+        ];
+        if (currentStep < labels.length) nextButton.textContent = labels[currentStep];
+
+        if (currentStep >= 2) renderExperiment();
+        if (currentStep === 4 || currentStep === 5) renderManualMessage();
+        if (currentStep === 6) renderAutomation();
+
+        if (scrollTarget) {
+          window.requestAnimationFrame(function () {
+            var target = document.getElementById(scrollTarget);
+            var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (target && target.scrollIntoView) {
+              target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+            }
+          });
+        }
+      }
+
+      function advanceStep() {
+        if (currentStep === 0) {
+          currentStep = 1;
+          renderStep("estimators-section");
+          return;
+        }
+        if (currentStep === 1) {
+          ensureRepetition(0);
+          currentStep = 2;
+          renderStep("sample-section");
+          return;
+        }
+        if (currentStep === 2) {
+          currentStep = 3;
+          renderStep("plan-section");
+          return;
+        }
+        if (currentStep === 3) {
+          ensureRepetition(1);
+          currentStep = 4;
+          renderStep("manual-section");
+          return;
+        }
+        if (currentStep === 4) {
+          ensureRepetition(2);
+          currentStep = 5;
+          renderStep("manual-section");
+          return;
+        }
+        if (currentStep === 5) {
+          currentStep = 6;
+          renderStep("automation-section");
+          startAutomaticRun();
+        }
+      }
+
+      function goBack() {
+        if (currentStep === 0) return;
+        if (currentStep === 6) {
+          stopAutomaticRun();
+          repetitions = repetitions.slice(0, 3);
+          autoComplete = false;
+          finalAnalysis.hidden = true;
+          meanTheoryLabel.hidden = true;
+          maxTheoryLabel.hidden = true;
+          currentStep = 5;
+          renderStep("manual-section");
+          return;
+        }
+        currentStep -= 1;
+        renderStep(currentStep >= 1 ? ["problem-section", "estimators-section", "sample-section", "plan-section", "manual-section", "manual-section"][currentStep] : "problem-section");
+      }
+
+      function resetExperiment() {
+        stopAutomaticRun();
+        theta = randomTheta(theta);
+        repetitions = [];
+        currentStep = 0;
+        autoComplete = false;
+        finalAnalysis.hidden = true;
+        meanTheoryLabel.hidden = true;
+        maxTheoryLabel.hidden = true;
+        renderStep();
+        if (window.scrollTo) {
+          var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+        }
+      }
+
+      function renderExperiment() {
+        var count = visibleCount();
+        if (!count) return;
+        var visibleRecords = repetitions.slice(0, count);
+        var current = visibleRecords[visibleRecords.length - 1];
+
+        truthCopy.innerHTML = "The source used <strong>θ = " + formatNumber(theta, 1) + "</strong>. The markers show where each estimate lands relative to the true endpoint.";
+        sourceSpec.textContent = "θ = " + formatNumber(theta, 1);
+        currentRepetition.textContent = "Repetition " + count;
+        currentMeanEstimate.textContent = formatNumber(current.meanEstimate);
+        currentMaxEstimate.textContent = formatNumber(current.maxEstimate);
+        currentTheta.textContent = formatNumber(theta, 1);
+
+        var closer = closerEstimator(current);
+        sampleMessage.innerHTML = "<strong>" + closer + " is closer in this sample.</strong> Either estimator can win on a single draw just by chance; their sampling distributions tell us which outcome occurs more frequently.";
+
+        renderTable(visibleRecords);
+        drawDataChart(current);
+        if (currentStep >= 3) drawSamplingCharts(visibleRecords, autoComplete);
+      }
+
+      function renderTable(records) {
+        recordCount.textContent = records.length + " / " + M;
+        recordsBody.innerHTML = records.map(function (record, index) {
+          var rowClass = index === records.length - 1 ? " class=\"current-row\"" : "";
+          return "<tr" + rowClass + "><td>" + (index + 1) + "</td><td>" + formatNumber(record.meanEstimate) + "</td><td>" + formatNumber(record.maxEstimate) + "</td></tr>";
+        }).join("");
+
+        if (currentStep === 6 && !autoComplete) {
+          window.requestAnimationFrame(function () {
+            tableWrap.scrollTop = tableWrap.scrollHeight;
+          });
+        }
+      }
+
+      function renderManualMessage() {
+        var repetitionNumber = currentStep === 4 ? 2 : 3;
+        var record = repetitions[repetitionNumber - 1];
+        manualCopy.textContent = "Repetition " + repetitionNumber + " uses a fresh sample of 50 observations from the same source.";
+        manualNote.innerHTML = "<strong>Recorded:</strong> 2X̄ = " + formatNumber(record.meanEstimate) + " and X<sub>(n)</sub> = " + formatNumber(record.maxEstimate) + ". " + closerEstimator(record) + " is closer this time.";
+      }
+
+      function startAutomaticRun() {
+        stopAutomaticRun();
+        repetitions = repetitions.slice(0, 3);
+        autoComplete = false;
+        renderAutomation();
+
+        autoTimer = window.setInterval(function () {
+          repetitions.push(generateRepetition());
+          renderExperiment();
+          renderAutomation();
+
+          if (repetitions.length % 10 === 0 && repetitions.length < M) {
+            simulationAnnouncement.textContent = repetitions.length + " of 100 repetitions complete.";
+          }
+          if (repetitions.length >= M) {
+            stopAutomaticRun();
+            autoComplete = true;
+            renderExperiment();
+            renderAutomation();
+            simulationAnnouncement.textContent = "All 100 repetitions are complete. The theoretical densities are now visible.";
+          }
+        }, AUTO_DELAY_MS);
+      }
+
+      function stopAutomaticRun() {
+        if (autoTimer !== null) {
+          window.clearInterval(autoTimer);
+          autoTimer = null;
+        }
+      }
+
+      function renderAutomation() {
+        var completed = repetitions.length;
+        var percent = Math.min(100, completed);
+        progressValue.textContent = completed + " / " + M + " repetitions";
+        progressBar.style.width = percent + "%";
+        simulationProgress.setAttribute("aria-valuenow", String(completed));
+
+        if (autoComplete) {
+          automationCopy.textContent = "All 100 repetitions are recorded. The exact theoretical curves are overlaid below.";
+          progressTime.textContent = "Complete";
+          finalAnalysis.hidden = false;
+          meanTheoryLabel.hidden = false;
+          maxTheoryLabel.hidden = false;
+          renderFinalAnalysis();
+        } else {
+          var seconds = Math.max(0, (M - completed) * AUTO_DELAY_MS / 1000);
+          automationCopy.textContent = "Generating the remaining repetitions and updating all three histograms in real time.";
+          progressTime.textContent = "About " + Math.ceil(seconds) + " seconds remaining";
+          finalAnalysis.hidden = true;
+          meanTheoryLabel.hidden = true;
+          maxTheoryLabel.hidden = true;
+        }
+      }
+
+      function renderFinalAnalysis() {
+        var meanValues = repetitions.map(function (record) { return record.meanEstimate; });
+        var maxValues = repetitions.map(function (record) { return record.maxEstimate; });
+        var empiricalMeanBias = mean(meanValues) - theta;
+        var empiricalMaxBias = mean(maxValues) - theta;
+        var empiricalMeanVariance = variance(meanValues);
+        var empiricalMaxVariance = variance(maxValues);
+        var theoreticalMeanVariance = theta * theta / (3 * N);
+        var theoreticalMaxBias = -theta / (N + 1);
+        var theoreticalMaxVariance = N * theta * theta / (Math.pow(N + 1, 2) * (N + 2));
+        var meanWins = 0;
+        var maxWins = 0;
+        var ties = 0;
+
+        repetitions.forEach(function (record) {
+          var winner = closerEstimator(record);
+          if (winner === "2X̄") meanWins += 1;
+          else if (winner === "X(n)") maxWins += 1;
+          else ties += 1;
+        });
+
+        meanAnalysis.innerHTML = "Its theoretical bias is <strong>0</strong> and Var(2X̄) = θ²/(3n) = <strong>" + formatNumber(theoreticalMeanVariance) + "</strong>. In this run, its empirical bias is " + formatNumber(empiricalMeanBias) + " and its empirical variance is " + formatNumber(empiricalMeanVariance) + ".";
+        maxAnalysis.innerHTML = "It concentrates close to θ with theoretical bias −θ/(n+1) = <strong>" + formatNumber(theoreticalMaxBias) + "</strong> and variance <strong>" + formatNumber(theoreticalMaxVariance) + "</strong>. This run gives bias " + formatNumber(empiricalMaxBias) + " and variance " + formatNumber(empiricalMaxVariance) + ".";
+        closerSummary.innerHTML = "<strong>Closer to θ:</strong> 2X̄ in " + meanWins + " repetitions; X<sub>(n)</sub> in " + maxWins + (ties ? "; ties in " + ties : "") + ". The maximum is biased downward, yet its sampling distribution is much more concentrated for n = 50.";
+      }
+
+      function buildHistogram(values, requestedDomain, binCount, anchorValue) {
+        var minimum = Math.max(0, requestedDomain[0]);
+        var maximum = Math.max(anchorValue, requestedDomain[1]);
+        var tolerance = Math.max(1, Math.abs(anchorValue)) * 1e-10;
+        var best = null;
+
+        for (var leftBinCount = 1; leftBinCount < binCount; leftBinCount += 1) {
+          var rightBinCount = binCount - leftBinCount;
+          var width = Math.max(
+            (anchorValue - minimum) / leftBinCount,
+            (maximum - anchorValue) / rightBinCount,
+            Number.EPSILON
+          );
+          var start = anchorValue - leftBinCount * width;
+          var end = anchorValue + rightBinCount * width;
+          if (start < -tolerance) continue;
+
+          var excess = (minimum - start) + (end - maximum);
+          if (!best || excess < best.excess - tolerance ||
+              (Math.abs(excess - best.excess) <= tolerance && width < best.width)) {
+            best = {
+              leftBinCount: leftBinCount,
+              width: width,
+              excess: excess
+            };
+          }
+        }
+
+        if (!best) {
+          best = {
+            leftBinCount: 1,
+            width: Math.max(anchorValue - minimum, (maximum - anchorValue) / (binCount - 1), Number.EPSILON)
+          };
+        }
+
+        var bins = Array.from({ length: binCount }, function (_, index) {
+          var leftOffset = index - best.leftBinCount;
+          var rightOffset = leftOffset + 1;
+          return {
+            x0: leftOffset === 0 ? anchorValue : anchorValue + leftOffset * best.width,
+            x1: rightOffset === 0 ? anchorValue : anchorValue + rightOffset * best.width,
+            count: 0,
+            density: 0
+          };
+        });
+
+        if (Math.abs(bins[0].x0) <= tolerance) bins[0].x0 = 0;
+        var domain = [bins[0].x0, bins[bins.length - 1].x1];
+
+        values.forEach(function (value) {
+          var rawIndex = value === anchorValue
+            ? best.leftBinCount - 1
+            : Math.floor((value - domain[0]) / best.width + 1e-12);
+          var index = Math.max(0, Math.min(binCount - 1, rawIndex));
+          bins[index].count += 1;
+        });
+
+        bins.forEach(function (bin) {
+          bin.density = bin.count / (values.length * best.width);
+        });
+        return { bins: bins, domain: domain };
+      }
+
+      function niceTicks(minimum, maximum, targetCount) {
+        var rawStep = (maximum - minimum) / Math.max(1, targetCount);
+        var magnitude = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
+        var residual = rawStep / magnitude;
+        var niceResidual = residual <= 1 ? 1 : residual <= 2 ? 2 : residual <= 5 ? 5 : 10;
+        var step = niceResidual * magnitude;
+        var start = Math.ceil(minimum / step) * step;
+        var ticks = [];
+        for (var value = start; value <= maximum + step * 0.2; value += step) {
+          ticks.push(Math.abs(value) < step * 1e-8 ? 0 : value);
+        }
+        return ticks;
+      }
+
+      function chartSize(wrap, compact) {
+        var width = Math.max(180, Math.round(wrap.getBoundingClientRect().width || 640));
+        var height;
+        if (currentStep >= 3) {
+          height = compact ? 214 : 226;
+        } else {
+          height = width < 520 ? 280 : 310;
+        }
+        return { width: width, height: height };
+      }
+
+      function drawDataChart(record) {
+        var size = chartSize(dataChartWrap, false);
+        var width = size.width;
+        var height = size.height;
+        var margin = { top: 20, right: 18, bottom: 54, left: width < 420 ? 50 : 61 };
+        var plotWidth = width - margin.left - margin.right;
+        var plotHeight = height - margin.top - margin.bottom;
+        var requestedDomain = [0, Math.max(theta * 1.18, record.meanEstimate * 1.07)];
+        var histogram = buildHistogram(record.data, requestedDomain, DATA_BIN_COUNT, theta);
+        var domain = histogram.domain;
+        var bins = histogram.bins;
+        var yMax = Math.max.apply(null, bins.map(function (bin) { return bin.density; })) * 1.18;
+        var xScale = function (value) { return margin.left + (value - domain[0]) / (domain[1] - domain[0]) * plotWidth; };
+        var yScale = function (value) { return margin.top + plotHeight - value / yMax * plotHeight; };
+        var xTicks = niceTicks(domain[0], domain[1], width < 300 ? 3 : width < 520 ? 4 : 6);
+        var yTicks = niceTicks(0, yMax, 4);
+        var plotBottom = margin.top + plotHeight;
+        var clipId = "data-plot-clip";
+        dataChartDescription.textContent = "Repetition " + visibleCount() + " contains 50 observations from Uniform zero to " + formatNumber(theta, 1) + ". Twice the mean is " + formatNumber(record.meanEstimate) + " and the sample maximum is " + formatNumber(record.maxEstimate) + ".";
+        var svg = "<title>Histogram of the current uniform sample with both estimates and the true endpoint</title>";
+        svg += "<desc>" + dataChartDescription.textContent + "</desc>";
+        svg += "<defs><clipPath id=\"" + clipId + "\"><rect x=\"" + margin.left + "\" y=\"" + margin.top + "\" width=\"" + plotWidth + "\" height=\"" + plotHeight + "\"></rect></clipPath></defs>";
+        svg += "<rect class=\"plot-background\" x=\"" + margin.left + "\" y=\"" + margin.top + "\" width=\"" + plotWidth + "\" height=\"" + plotHeight + "\"></rect>";
+
+        yTicks.forEach(function (tick) {
+          var y = yScale(tick);
+          svg += "<line class=\"grid-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + y + "\" y2=\"" + y + "\"></line>";
+          svg += "<text class=\"axis-text\" x=\"" + (margin.left - 9) + "\" y=\"" + (y + 4) + "\" text-anchor=\"end\">" + formatAxis(tick) + "</text>";
+        });
+        xTicks.forEach(function (tick) {
+          var x = xScale(tick);
+          svg += "<line class=\"axis-line\" x1=\"" + x + "\" x2=\"" + x + "\" y1=\"" + plotBottom + "\" y2=\"" + (plotBottom + 5) + "\"></line>";
+          svg += "<text class=\"axis-text\" x=\"" + x + "\" y=\"" + (plotBottom + 21) + "\" text-anchor=\"middle\">" + formatAxis(tick) + "</text>";
+        });
+
+        svg += "<g clip-path=\"url(#" + clipId + ")\">";
+        bins.forEach(function (bin, index) {
+          var x = xScale(bin.x0);
+          var barWidth = Math.max(0, xScale(bin.x1) - x - 1);
+          var y = yScale(bin.density);
+          svg += "<rect class=\"raw-bar\" x=\"" + x + "\" y=\"" + y + "\" width=\"" + barWidth + "\" height=\"" + (plotBottom - y) + "\"><title>Bin " + (index + 1) + ": " + bin.count + " observations</title></rect>";
+        });
+        svg += "<line class=\"truth-line\" x1=\"" + xScale(theta) + "\" x2=\"" + xScale(theta) + "\" y1=\"" + margin.top + "\" y2=\"" + plotBottom + "\"></line>";
+        svg += "</g>";
+
+        var meanX = xScale(record.meanEstimate);
+        var maxX = xScale(record.maxEstimate);
+        svg += "<circle class=\"mean-marker\" cx=\"" + meanX + "\" cy=\"" + plotBottom + "\" r=\"6\"><title>2 times sample mean: " + formatNumber(record.meanEstimate) + "</title></circle>";
+        svg += "<path class=\"max-marker\" d=\"M " + maxX + " " + (plotBottom - 7) + " L " + (maxX + 7) + " " + plotBottom + " L " + maxX + " " + (plotBottom + 7) + " L " + (maxX - 7) + " " + plotBottom + " Z\"><title>Sample maximum: " + formatNumber(record.maxEstimate) + "</title></path>";
+        svg += "<line class=\"axis-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + plotBottom + "\" y2=\"" + plotBottom + "\"></line>";
+        svg += "<text class=\"axis-title\" x=\"" + (margin.left + plotWidth / 2) + "\" y=\"" + (height - 8) + "\" text-anchor=\"middle\">Observed value</text>";
+        svg += "<text class=\"axis-title\" transform=\"translate(15 " + (margin.top + plotHeight / 2) + ") rotate(-90)\" text-anchor=\"middle\">Density</text>";
+
+        dataChart.setAttribute("viewBox", "0 0 " + width + " " + height);
+        dataChart.setAttribute("width", String(width));
+        dataChart.setAttribute("height", String(height));
+        dataChart.innerHTML = svg;
+      }
+
+      function samplingDomain(records) {
+        var values = [];
+        records.forEach(function (record) {
+          values.push(record.meanEstimate, record.maxEstimate);
+        });
+        var minimum = Math.min.apply(null, [0.55 * theta].concat(values));
+        var maximum = Math.max.apply(null, [1.35 * theta].concat(values));
+        var pad = 0.02 * theta;
+        return [Math.max(0, minimum - pad), maximum + pad];
+      }
+
+      function irwinHallDensity(order, x) {
+        if (x <= 0 || x >= order) return 0;
+        x = Math.min(x, order - x);
+        var memo = new Map();
+
+        function evaluate(n, y) {
+          if (n === 1) return y >= 0 && y < 1 ? 1 : 0;
+          if (y <= 0 || y >= n) return 0;
+          var key = n + "|" + y.toFixed(12);
+          if (memo.has(key)) return memo.get(key);
+          var value = y / (n - 1) * evaluate(n - 1, y) +
+            (n - y) / (n - 1) * evaluate(n - 1, y - 1);
+          memo.set(key, value);
+          return value;
+        }
+
+        return Math.max(0, evaluate(order, x));
+      }
+
+      function estimatorDensity(type, value) {
+        if (type === "mean") {
+          if (value <= 0 || value >= 2 * theta) return 0;
+          var standardizedSum = N * value / (2 * theta);
+          return N / (2 * theta) * irwinHallDensity(N, standardizedSum);
+        }
+        if (value < 0 || value > theta) return 0;
+        return N / theta * Math.pow(value / theta, N - 1);
+      }
+
+      function drawSamplingCharts(records, showTheory) {
+        var domain = samplingDomain(records);
+        var meanValues = records.map(function (record) { return record.meanEstimate; });
+        var maxValues = records.map(function (record) { return record.maxEstimate; });
+        drawSamplingChart(meanChart, meanChartWrap, meanChartDescription, meanValues, domain, "mean", showTheory);
+        drawSamplingChart(maxChart, maxChartWrap, maxChartDescription, maxValues, domain, "max", showTheory);
+        var label = records.length === 1 ? "1 recorded estimate" : records.length + " recorded estimates";
+        meanRecordLabel.textContent = label;
+        maxRecordLabel.textContent = label;
+      }
+
+      function drawSamplingChart(svgElement, wrap, descriptionElement, values, domain, type, showTheory) {
+        var size = chartSize(wrap, true);
+        var width = size.width;
+        var height = size.height;
+        var margin = { top: 16, right: 16, bottom: 50, left: width < 420 ? 49 : 59 };
+        var plotWidth = width - margin.left - margin.right;
+        var plotHeight = height - margin.top - margin.bottom;
+        var plotBottom = margin.top + plotHeight;
+        var histogram = buildHistogram(values, domain, ESTIMATOR_BIN_COUNT, theta);
+        domain = histogram.domain;
+        var bins = histogram.bins;
+        var histogramMax = Math.max.apply(null, bins.map(function (bin) { return bin.density; }));
+        var curvePoints = [];
+
+        if (showTheory) {
+          for (var index = 0; index <= 220; index += 1) {
+            var xValue = domain[0] + (domain[1] - domain[0]) * index / 220;
+            if (type === "max" && xValue >= theta) continue;
+            curvePoints.push({ x: xValue, y: estimatorDensity(type, xValue) });
+          }
+          if (type === "max" && theta >= domain[0] && theta <= domain[1]) {
+            curvePoints.push({ x: theta, y: estimatorDensity(type, theta) });
+          }
+        }
+
+        var curveMax = curvePoints.length ? Math.max.apply(null, curvePoints.map(function (point) { return point.y; })) : 0;
+        var yMax = Math.max(histogramMax, curveMax, 0.01) * 1.14;
+        var xScale = function (value) { return margin.left + (value - domain[0]) / (domain[1] - domain[0]) * plotWidth; };
+        var yScale = function (value) { return margin.top + plotHeight - value / yMax * plotHeight; };
+        var xTicks = niceTicks(domain[0], domain[1], width < 300 ? 3 : width < 480 ? 4 : 5);
+        var yTicks = niceTicks(0, yMax, 4);
+        var clipId = type + "-sampling-clip";
+        var estimatorName = type === "mean" ? "2 times the sample mean" : "the sample maximum";
+        var barClass = type === "mean" ? "mean-bar" : "max-bar";
+        descriptionElement.textContent = "Density histogram of " + values.length + " recorded values of " + estimatorName + ". The true theta is " + formatNumber(theta, 1) + "." + (showTheory ? " The exact finite-sample density is overlaid." : "");
+        var svg = "<title>Histogram of recorded values of " + estimatorName + (showTheory ? " with exact theoretical density" : "") + "</title>";
+        svg += "<desc>" + descriptionElement.textContent + "</desc>";
+        svg += "<defs><clipPath id=\"" + clipId + "\"><rect x=\"" + margin.left + "\" y=\"" + margin.top + "\" width=\"" + plotWidth + "\" height=\"" + plotHeight + "\"></rect></clipPath></defs>";
+        svg += "<rect class=\"plot-background\" x=\"" + margin.left + "\" y=\"" + margin.top + "\" width=\"" + plotWidth + "\" height=\"" + plotHeight + "\"></rect>";
+
+        yTicks.forEach(function (tick) {
+          var y = yScale(tick);
+          svg += "<line class=\"grid-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + y + "\" y2=\"" + y + "\"></line>";
+          svg += "<text class=\"axis-text\" x=\"" + (margin.left - 8) + "\" y=\"" + (y + 4) + "\" text-anchor=\"end\">" + formatAxis(tick) + "</text>";
+        });
+        xTicks.forEach(function (tick) {
+          var x = xScale(tick);
+          svg += "<line class=\"axis-line\" x1=\"" + x + "\" x2=\"" + x + "\" y1=\"" + plotBottom + "\" y2=\"" + (plotBottom + 5) + "\"></line>";
+          svg += "<text class=\"axis-text\" x=\"" + x + "\" y=\"" + (plotBottom + 20) + "\" text-anchor=\"middle\">" + formatAxis(tick) + "</text>";
+        });
+
+        svg += "<g clip-path=\"url(#" + clipId + ")\">";
+        bins.forEach(function (bin, index) {
+          var x = xScale(bin.x0);
+          var barWidth = Math.max(0, xScale(bin.x1) - x - 1);
+          var y = yScale(bin.density);
+          svg += "<rect class=\"" + barClass + "\" x=\"" + x + "\" y=\"" + y + "\" width=\"" + barWidth + "\" height=\"" + (plotBottom - y) + "\"><title>Bin " + (index + 1) + ": " + bin.count + " estimates</title></rect>";
+        });
+        svg += "<line class=\"truth-line\" x1=\"" + xScale(theta) + "\" x2=\"" + xScale(theta) + "\" y1=\"" + margin.top + "\" y2=\"" + plotBottom + "\"></line>";
+
+        if (showTheory) {
+          var path = curvePoints.map(function (point, index) {
+            return (index === 0 ? "M" : "L") + xScale(point.x).toFixed(2) + "," + yScale(point.y).toFixed(2);
+          }).join(" ");
+          svg += "<path class=\"theory-curve\" d=\"" + path + "\"></path>";
+        }
+        svg += "</g>";
+        svg += "<line class=\"axis-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + plotBottom + "\" y2=\"" + plotBottom + "\"></line>";
+        svg += "<text class=\"axis-title\" x=\"" + (margin.left + plotWidth / 2) + "\" y=\"" + (height - 8) + "\" text-anchor=\"middle\">Estimate of θ</text>";
+        svg += "<text class=\"axis-title\" transform=\"translate(14 " + (margin.top + plotHeight / 2) + ") rotate(-90)\" text-anchor=\"middle\">Density</text>";
+
+        svgElement.setAttribute("viewBox", "0 0 " + width + " " + height);
+        svgElement.setAttribute("width", String(width));
+        svgElement.setAttribute("height", String(height));
+        svgElement.innerHTML = svg;
+      }
+
+      function scheduleChartRedraw() {
+        if (resizeFrame !== null) return;
+        resizeFrame = window.requestAnimationFrame(function () {
+          resizeFrame = null;
+          if (currentStep >= 2) renderExperiment();
+        });
+      }
+
+      nextButton.addEventListener("click", advanceStep);
+      backButton.addEventListener("click", goBack);
+      retryButton.addEventListener("click", resetExperiment);
+
+      if ("ResizeObserver" in window) {
+        var observer = new ResizeObserver(scheduleChartRedraw);
+        observer.observe(dataChartWrap);
+        observer.observe(meanChartWrap);
+        observer.observe(maxChartWrap);
+      } else {
+        window.addEventListener("resize", scheduleChartRedraw);
+      }
+
+      resetExperiment();
+    })();
+  </script>
+</body>
+</html>
