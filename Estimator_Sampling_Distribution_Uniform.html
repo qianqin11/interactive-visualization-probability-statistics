@@ -1280,7 +1280,7 @@
         currentTheta.textContent = formatNumber(theta, 1);
 
         var closer = closerEstimator(current);
-        sampleMessage.innerHTML = "<strong>" + closer + " is closer in this sample.</strong> Either estimator can win on a single draw just by chance; their sampling distributions tell us which outcome occurs more frequently.";
+        sampleMessage.innerHTML = "<strong>" + closer + " is closer in this sample.</strong> Either estimator can win in a single sample just by chance; their sampling distributions tell us which outcome occurs more frequently.";
 
         renderTable(visibleRecords);
         drawDataChart(current);

@@ -1,0 +1,1402 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A guided simulation exploring repeated confidence intervals for a Normal mean.">
+  <title>Confidence Intervals — Normal Mean</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #0b1f33;
+      --ink-soft: #526579;
+      --paper: #f5f7fa;
+      --surface: #ffffff;
+      --surface-soft: #edf2f7;
+      --oxford: #002147;
+      --oxford-deep: #00152e;
+      --blue: #3973a1;
+      --blue-soft: #dce8f2;
+      --line: #d7e0e8;
+      --grid: #e9eef3;
+      --miss: #a04450;
+      --miss-soft: #f5e4e6;
+      --focus: #1f6fa8;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button { font: inherit; }
+
+    button:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px var(--focus);
+    }
+
+    .page-shell {
+      width: min(1320px, 100%);
+      margin: 0 auto;
+      padding: clamp(30px, 5vw, 62px) clamp(14px, 3vw, 42px) 48px;
+    }
+
+    .hero {
+      max-width: 790px;
+      padding-bottom: clamp(26px, 4vw, 42px);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 14px;
+      color: var(--oxford);
+      font-size: clamp(2.35rem, 4.5vw, 4rem);
+      font-weight: 750;
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+
+    .hero p {
+      max-width: 700px;
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: clamp(0.98rem, 1.4vw, 1.08rem);
+    }
+
+    .lesson {
+      display: grid;
+      gap: 18px;
+    }
+
+    .reveal-section {
+      padding: clamp(21px, 3vw, 30px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      animation: reveal 240ms ease-out;
+    }
+
+    .reveal-section[hidden],
+    [hidden] { display: none !important; }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-heading {
+      max-width: 850px;
+      margin-bottom: 18px;
+    }
+
+    .section-heading h2 {
+      margin-bottom: 6px;
+      color: var(--oxford);
+      font-size: clamp(1.2rem, 2vw, 1.48rem);
+      font-weight: 720;
+      letter-spacing: -0.025em;
+    }
+
+    .section-heading p {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .problem-layout {
+      display: grid;
+      gap: 12px;
+    }
+
+    .problem-layout .section-heading { margin-bottom: 0; }
+
+    .math-display {
+      width: 100%;
+      padding: 14px 18px;
+      border-left: 3px solid var(--oxford);
+      background: var(--surface-soft);
+      color: var(--oxford);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.2rem, 2vw, 1.58rem);
+      text-align: left;
+    }
+
+    .iid-relation {
+      position: relative;
+      display: inline-block;
+      margin-inline: 0.18em;
+      padding-top: 0.45em;
+      line-height: 0.8;
+    }
+
+    .iid-relation::before {
+      position: absolute;
+      top: -0.18em;
+      left: 50%;
+      content: "iid";
+      font-size: 0.46em;
+      font-style: normal;
+      line-height: 1;
+      transform: translateX(-50%);
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+      gap: 14px;
+    }
+
+    .method-card {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+
+    .method-card h3 {
+      margin-bottom: 5px;
+      color: var(--oxford);
+      font-size: 0.98rem;
+    }
+
+    .method-card p {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.84rem;
+    }
+
+    .method-formula {
+      display: flex;
+      min-height: 100%;
+      align-items: center;
+      justify-content: center;
+      color: var(--oxford);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.35rem, 2.5vw, 2rem);
+      text-align: center;
+    }
+
+    .workspace-status {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, 0.85fr);
+      align-items: center;
+      gap: 12px 24px;
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--blue);
+      background: var(--surface-soft);
+    }
+
+    .workspace-status h2 {
+      margin-bottom: 2px;
+      color: var(--oxford);
+      font-size: 0.96rem;
+    }
+
+    .workspace-status p {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+    }
+
+    .manual-note { text-align: right; }
+    .manual-note strong { color: var(--ink); }
+
+    .experiment-workspace {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.92fr) minmax(360px, 1.28fr) minmax(230px, 0.8fr);
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .chart-panel,
+    .table-panel {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+
+    .chart-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 6px 12px;
+      margin-bottom: 7px;
+    }
+
+    .chart-header h3 {
+      margin-bottom: 2px;
+      color: var(--oxford);
+      font-size: 0.96rem;
+    }
+
+    .chart-header p,
+    .record-count {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.74rem;
+    }
+
+    .current-values {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px 13px;
+      margin-bottom: 5px;
+      color: var(--ink-soft);
+      font-size: 0.75rem;
+    }
+
+    .current-values strong {
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .outcome {
+      font-weight: 750;
+    }
+
+    .outcome.cover { color: var(--oxford); }
+    .outcome.miss { color: var(--miss); }
+
+    .interval-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px 11px;
+      color: var(--ink-soft);
+      font-size: 0.7rem;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-line {
+      display: inline-block;
+      width: 2px;
+      height: 13px;
+      background: var(--blue);
+    }
+
+    .legend-line.miss { background: var(--miss); }
+
+    .legend-line.truth {
+      width: 18px;
+      height: 0;
+      border-top: 2px dashed var(--oxford);
+      background: transparent;
+    }
+
+    .coverage-count {
+      color: var(--oxford);
+      font-size: 0.75rem;
+      font-weight: 750;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      min-height: 0;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .plot-background {
+      fill: #fff;
+      stroke: var(--line);
+      stroke-width: 1;
+    }
+
+    .grid-line { stroke: var(--grid); stroke-width: 1; }
+    .axis-line { stroke: #8a9bae; stroke-width: 1; }
+
+    .axis-text {
+      fill: var(--ink-soft);
+      font-family: Inter, ui-sans-serif, sans-serif;
+      font-size: 11px;
+    }
+
+    .axis-title {
+      fill: var(--ink);
+      font-family: Inter, ui-sans-serif, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .histogram-bar {
+      fill: rgba(0, 33, 71, 0.68);
+      stroke: #fff;
+      stroke-width: 1;
+    }
+
+    .truth-line {
+      stroke: var(--oxford);
+      stroke-width: 2;
+      stroke-dasharray: 5 4;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .truth-label {
+      fill: var(--oxford);
+      stroke: #fff;
+      stroke-width: 4px;
+      paint-order: stroke;
+      font-family: Inter, ui-sans-serif, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .ci-line,
+    .ci-cap {
+      stroke: var(--blue);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .ci-line.miss,
+    .ci-cap.miss { stroke: var(--miss); }
+
+    .ci-group.current .ci-line { stroke-width: 4; }
+
+    .ci-line.dense { stroke-width: 1; }
+    .ci-group.current .ci-line.dense { stroke-width: 2; }
+
+    .table-panel {
+      display: flex;
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    .table-wrap {
+      max-height: 310px;
+      overflow: auto;
+      border-top: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.74rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th, td {
+      padding: 7px 5px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--surface);
+      color: var(--ink-soft);
+      font-size: 0.67rem;
+      letter-spacing: 0.02em;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+
+    td.result-cell { font-weight: 700; }
+    td.result-cell.miss { color: var(--miss); }
+
+    tr.current-row td {
+      background: var(--blue-soft);
+      color: var(--oxford);
+    }
+
+    tr.current-row.miss-row td { background: var(--miss-soft); }
+
+    .sample-message,
+    .plan-note {
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      border-left: 3px solid var(--blue);
+      background: var(--surface-soft);
+      color: var(--ink-soft);
+      font-size: 0.84rem;
+    }
+
+    .sample-message strong,
+    .plan-note strong { color: var(--ink); }
+
+    .simulation-spec {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px 21px;
+      margin-top: 12px;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+    }
+
+    .simulation-spec strong {
+      color: var(--oxford);
+      font-size: 0.96rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .progress-row strong {
+      color: var(--oxford);
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-row span {
+      color: var(--ink-soft);
+      font-size: 0.75rem;
+    }
+
+    .progress {
+      height: 8px;
+      margin-top: 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #dfe6ed;
+    }
+
+    .progress-bar {
+      width: 3%;
+      height: 100%;
+      background: var(--oxford);
+      transition: width 90ms linear;
+    }
+
+    .final-analysis {
+      margin-top: 16px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .coverage-result {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .coverage-number {
+      min-width: 128px;
+      color: var(--oxford);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 760;
+      letter-spacing: -0.045em;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .coverage-copy p {
+      margin-bottom: 5px;
+      color: var(--ink-soft);
+      font-size: 0.84rem;
+    }
+
+    .coverage-copy p:last-child { margin-bottom: 0; }
+
+    .step-nav {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 0;
+    }
+
+    .step-count {
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 43px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--oxford);
+      border-radius: 9px;
+      padding: 9px 16px;
+      background: var(--oxford);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.84rem;
+      font-weight: 700;
+      transition: background 160ms ease;
+    }
+
+    .button:hover { background: var(--oxford-deep); }
+
+    .button.secondary {
+      justify-self: start;
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--oxford);
+    }
+
+    .button.secondary:hover { background: var(--surface-soft); }
+    .button.next { justify-self: end; }
+    .button:disabled { cursor: not-allowed; opacity: 0.42; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    #page-shell[data-repetition-mode="true"] {
+      padding-top: 12px;
+      padding-bottom: 24px;
+    }
+
+    #page-shell[data-repetition-mode="true"] .hero,
+    #page-shell[data-repetition-mode="true"] #problem-section,
+    #page-shell[data-repetition-mode="true"] #method-section,
+    #page-shell[data-repetition-mode="true"] #plan-section,
+    #page-shell[data-repetition-mode="true"] #sample-section > .section-heading,
+    #page-shell[data-repetition-mode="true"] #sample-message {
+      display: none;
+    }
+
+    #page-shell[data-repetition-mode="true"] .lesson { gap: 10px; }
+    #page-shell[data-repetition-mode="true"] #sample-section { padding: 12px; }
+
+    @media (max-width: 1120px) {
+      .experiment-workspace {
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      }
+
+      .table-panel { grid-column: 1 / -1; }
+      .table-wrap { max-height: 112px; }
+    }
+
+    @media (max-width: 720px) {
+      .page-shell { padding-inline: 13px; }
+
+      .method-grid,
+      .experiment-workspace,
+      .coverage-result {
+        grid-template-columns: 1fr;
+      }
+
+      .math-display { overflow-wrap: anywhere; }
+
+      .workspace-status { grid-template-columns: 1fr; }
+      .manual-note { text-align: left; }
+      .table-panel { grid-column: auto; }
+
+      .chart-header,
+      .progress-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .step-nav { grid-template-columns: 1fr 1fr; }
+      .step-count { grid-column: 1 / -1; grid-row: 1; }
+      .button.secondary { grid-column: 1; grid-row: 2; }
+      .button.next { grid-column: 2; grid-row: 2; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell" id="page-shell">
+    <header class="hero">
+      <h1>Confidence intervals</h1>
+      <p>Follow one interval, then many, to see what repeated-sample coverage means for an unknown Normal mean.</p>
+    </header>
+
+    <main class="lesson">
+      <section class="reveal-section" id="problem-section" aria-labelledby="problem-heading">
+        <div class="problem-layout">
+          <div class="section-heading">
+            <h2 id="problem-heading">The problem</h2>
+            <p>A Normal source has unknown mean μ and unknown standard deviation σ. We observe n = 50 independent values and want an interval that expresses uncertainty about μ.</p>
+          </div>
+          <div class="math-display" aria-label="X one through X n are independent and identically distributed as Normal mu sigma squared; n equals 50; mu and sigma are unknown">
+            X<sub>1</sub>, …, X<sub>n</sub> <span class="iid-relation">∼</span> N(μ, σ<sup>2</sup>), &nbsp;n = 50, &nbsp;μ and σ unknown
+          </div>
+        </div>
+      </section>
+
+      <section class="reveal-section" id="method-section" aria-labelledby="method-heading" hidden>
+        <div class="section-heading">
+          <h2 id="method-heading">A 1.96-based confidence interval</h2>
+          <p>For each sample, use its average and sample standard deviation to construct an approximate 95% confidence interval for μ.</p>
+        </div>
+        <div class="method-grid">
+          <article class="method-card method-formula" aria-label="X bar plus or minus 1.96 times S divided by square root of n">
+            X̄ ± 1.96 <span aria-hidden="true">·</span> S/√n
+          </article>
+          <article class="method-card">
+            <h3>What is random?</h3>
+            <p>S uses the n − 1 denominator. The true μ stays fixed, while X̄, S, and both interval endpoints change from sample to sample.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="reveal-section" id="sample-section" aria-labelledby="sample-heading" hidden>
+        <div class="section-heading">
+          <h2 id="sample-heading">One sample from the source</h2>
+          <p id="truth-copy">The source parameters are now revealed, and the first interval is recorded.</p>
+        </div>
+
+        <section class="workspace-status" id="manual-section" aria-labelledby="manual-heading" hidden>
+          <div>
+            <h2 id="manual-heading">Record the next repetition</h2>
+            <p id="manual-copy">A fresh sample has produced a new interval.</p>
+          </div>
+          <p class="manual-note" id="manual-note" role="status"></p>
+        </section>
+
+        <section class="workspace-status" id="automation-section" aria-labelledby="automation-heading" hidden>
+          <div>
+            <h2 id="automation-heading">Complete the simulation</h2>
+            <p id="automation-copy">Revealing the remaining repetitions and updating every view in real time.</p>
+          </div>
+          <div>
+            <div class="progress-row">
+              <strong id="progress-value">3 / 100 repetitions</strong>
+              <span id="progress-time">About 10 seconds remaining</span>
+            </div>
+            <div class="progress" id="simulation-progress" role="progressbar" aria-label="Simulation repetitions completed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="3">
+              <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <p class="sr-only" id="simulation-announcement" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <div class="experiment-workspace" id="experiment-workspace">
+          <section class="chart-panel" aria-labelledby="sample-chart-heading">
+            <div class="chart-header">
+              <div>
+                <h3 id="sample-chart-heading">Current sample</h3>
+                <p id="current-repetition">Repetition 1 · n = 50</p>
+              </div>
+            </div>
+            <div class="current-values" aria-label="Current sample statistics and interval">
+              <span>X̄ <strong id="current-mean">—</strong></span>
+              <span>S <strong id="current-sd">—</strong></span>
+              <span>CI <strong id="current-interval">—</strong></span>
+              <span class="outcome" id="current-outcome">—</span>
+            </div>
+            <div class="chart-wrap" id="sample-chart-wrap">
+              <svg id="sample-chart" role="img" aria-labelledby="sample-chart-heading sample-chart-description"></svg>
+              <p class="sr-only" id="sample-chart-description"></p>
+            </div>
+          </section>
+
+          <section class="chart-panel" aria-labelledby="interval-chart-heading">
+            <div class="chart-header">
+              <div>
+                <h3 id="interval-chart-heading">Confidence intervals by repetition</h3>
+                <p>Each vertical segment is one interval</p>
+              </div>
+              <strong class="coverage-count" id="coverage-count">Covered 0 / 1</strong>
+            </div>
+            <div class="interval-legend" aria-label="Confidence interval plot legend">
+              <span class="legend-item"><span class="legend-line" aria-hidden="true"></span>Contains μ</span>
+              <span class="legend-item"><span class="legend-line miss" aria-hidden="true"></span>Misses μ</span>
+              <span class="legend-item"><span class="legend-line truth" aria-hidden="true"></span>True μ</span>
+            </div>
+            <div class="chart-wrap" id="interval-chart-wrap">
+              <svg id="interval-chart" role="img" aria-labelledby="interval-chart-heading interval-chart-description"></svg>
+              <p class="sr-only" id="interval-chart-description"></p>
+            </div>
+          </section>
+
+          <section class="table-panel" aria-labelledby="records-heading">
+            <div class="chart-header">
+              <div>
+                <h3 id="records-heading">Recorded endpoints</h3>
+                <p>One row per sample</p>
+              </div>
+              <span class="record-count" id="record-count">1 / 100</span>
+            </div>
+            <div class="table-wrap" id="table-wrap">
+              <table>
+                <caption class="sr-only">Lower and upper endpoints and coverage result for every confidence interval</caption>
+                <thead>
+                  <tr><th scope="col">Rep.</th><th scope="col">Lower</th><th scope="col">Upper</th><th scope="col">Result</th></tr>
+                </thead>
+                <tbody id="records-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <p class="sample-message" id="sample-message"></p>
+
+        <section class="final-analysis" id="final-analysis" aria-labelledby="analysis-heading" hidden>
+          <div class="section-heading">
+            <h2 id="analysis-heading">Coverage after 100 repetitions</h2>
+            <p>The tally summarizes how often this interval-building method captured the same fixed value of μ.</p>
+          </div>
+          <div class="coverage-result">
+            <strong class="coverage-number" id="coverage-number">—</strong>
+            <div class="coverage-copy">
+              <p id="coverage-summary"></p>
+              <p id="coverage-interpretation"></p>
+            </div>
+          </div>
+          <button class="button" id="retry-button" type="button">Retry with a new source</button>
+        </section>
+      </section>
+
+      <section class="reveal-section" id="plan-section" aria-labelledby="plan-heading" hidden>
+        <div class="section-heading">
+          <h2 id="plan-heading">Investigate repeated-sample coverage</h2>
+          <p>We will repeat the experiment m = 100 times using the same Normal source. The current histogram will be replaced, while the interval plot and table accumulate every result.</p>
+          <div class="simulation-spec" aria-label="Simulation settings">
+            <span>Sample size <strong>n = 50</strong></span>
+            <span>Repetitions <strong>m = 100</strong></span>
+            <span>Same source <strong id="source-spec">μ = — · σ = —</strong></span>
+          </div>
+        </div>
+        <p class="plan-note"><strong>Coverage:</strong> μ is fixed. Each random interval either contains it or misses it; the long-run fraction that contain μ is the method’s coverage probability.</p>
+      </section>
+
+      <nav class="step-nav" aria-label="Experiment navigation">
+        <button class="button secondary" id="back-button" type="button" disabled>Back</button>
+        <span class="step-count" id="step-count" aria-live="polite">Step 1 of 7</span>
+        <button class="button next" id="next-button" type="button">Continue</button>
+      </nav>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var N = 50;
+      var M = 100;
+      var Z_CRITICAL = 1.96;
+      var HISTOGRAM_BINS = 14;
+      var AUTO_DELAY_MS = 100;
+      var THEORETICAL_COVERAGE = 0.9443043922;
+
+      var sessionSeed = createSessionSeed();
+      var sourceRng = mulberry32(sessionSeed ^ 0xA341316C);
+      var sampleRng = mulberry32(sessionSeed ^ 0xC8013EA4);
+      var mu = 0;
+      var sigma = 1;
+      var repetitions = [];
+      var sampleXDomain = [-4, 4];
+      var intervalYDomain = [-1, 1];
+      var currentStep = 0;
+      var automaticCount = 3;
+      var autoTimer = null;
+      var autoComplete = false;
+      var resizeFrame = null;
+
+      var pageShell = document.getElementById("page-shell");
+      var methodSection = document.getElementById("method-section");
+      var sampleSection = document.getElementById("sample-section");
+      var planSection = document.getElementById("plan-section");
+      var manualSection = document.getElementById("manual-section");
+      var automationSection = document.getElementById("automation-section");
+      var finalAnalysis = document.getElementById("final-analysis");
+      var backButton = document.getElementById("back-button");
+      var nextButton = document.getElementById("next-button");
+      var retryButton = document.getElementById("retry-button");
+      var stepCount = document.getElementById("step-count");
+      var truthCopy = document.getElementById("truth-copy");
+      var sourceSpec = document.getElementById("source-spec");
+      var currentRepetition = document.getElementById("current-repetition");
+      var currentMean = document.getElementById("current-mean");
+      var currentSd = document.getElementById("current-sd");
+      var currentInterval = document.getElementById("current-interval");
+      var currentOutcome = document.getElementById("current-outcome");
+      var sampleMessage = document.getElementById("sample-message");
+      var manualCopy = document.getElementById("manual-copy");
+      var manualNote = document.getElementById("manual-note");
+      var coverageCountElement = document.getElementById("coverage-count");
+      var recordCount = document.getElementById("record-count");
+      var recordsBody = document.getElementById("records-body");
+      var tableWrap = document.getElementById("table-wrap");
+      var progressValue = document.getElementById("progress-value");
+      var progressTime = document.getElementById("progress-time");
+      var progressBar = document.getElementById("progress-bar");
+      var simulationProgress = document.getElementById("simulation-progress");
+      var simulationAnnouncement = document.getElementById("simulation-announcement");
+      var automationCopy = document.getElementById("automation-copy");
+      var coverageNumber = document.getElementById("coverage-number");
+      var coverageSummary = document.getElementById("coverage-summary");
+      var coverageInterpretation = document.getElementById("coverage-interpretation");
+      var sampleChartWrap = document.getElementById("sample-chart-wrap");
+      var intervalChartWrap = document.getElementById("interval-chart-wrap");
+      var sampleChart = document.getElementById("sample-chart");
+      var intervalChart = document.getElementById("interval-chart");
+      var sampleChartDescription = document.getElementById("sample-chart-description");
+      var intervalChartDescription = document.getElementById("interval-chart-description");
+
+      function createSessionSeed() {
+        try {
+          if (globalThis.crypto && globalThis.crypto.getRandomValues) {
+            var values = new Uint32Array(1);
+            globalThis.crypto.getRandomValues(values);
+            return values[0];
+          }
+        } catch (error) {
+          // Fall through to a time-based seed.
+        }
+        return (Date.now() ^ Math.floor(Math.random() * 0x100000000)) >>> 0;
+      }
+
+      function mulberry32(seed) {
+        var state = seed >>> 0;
+        return function () {
+          state += 0x6D2B79F5;
+          var value = state;
+          value = Math.imul(value ^ (value >>> 15), value | 1);
+          value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+          return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function randomBetween(minimum, maximum, rng) {
+        return minimum + (maximum - minimum) * rng();
+      }
+
+      function chooseNewSource(previousMu, previousSigma) {
+        var nextMu = Math.round(randomBetween(-3, 3, sourceRng) * 10) / 10;
+        var nextSigma = Math.round(randomBetween(0.8, 2, sourceRng) * 10) / 10;
+        if (nextMu === previousMu && nextSigma === previousSigma) {
+          nextMu = nextMu >= 3 ? 2.9 : Math.round((nextMu + 0.1) * 10) / 10;
+        }
+        mu = nextMu;
+        sigma = nextSigma;
+      }
+
+      function formatNumber(value, digits) {
+        var places = digits === undefined ? 3 : digits;
+        return Number(value).toLocaleString(undefined, {
+          minimumFractionDigits: places,
+          maximumFractionDigits: places
+        }).replace("-", "−");
+      }
+
+      function formatAxis(value) {
+        var absolute = Math.abs(value);
+        if (absolute >= 1000 || (absolute > 0 && absolute < 0.01)) {
+          return value.toExponential(1).replace("-", "−");
+        }
+        return value.toLocaleString(undefined, {
+          maximumFractionDigits: absolute >= 10 ? 1 : 2
+        }).replace("-", "−");
+      }
+
+      function mean(values) {
+        return values.reduce(function (sum, value) { return sum + value; }, 0) / values.length;
+      }
+
+      function sampleStandardDeviation(values, center) {
+        var squaredDeviations = values.reduce(function (sum, value) {
+          return sum + Math.pow(value - center, 2);
+        }, 0);
+        return Math.sqrt(squaredDeviations / (values.length - 1));
+      }
+
+      function normalDraw() {
+        var u1 = Math.max(sampleRng(), Number.MIN_VALUE);
+        var u2 = sampleRng();
+        var standardNormal = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        return mu + sigma * standardNormal;
+      }
+
+      function generateRepetition() {
+        var data = Array.from({ length: N }, function () { return normalDraw(); });
+        var sampleMean = mean(data);
+        var sampleSd = sampleStandardDeviation(data, sampleMean);
+        var margin = Z_CRITICAL * sampleSd / Math.sqrt(N);
+        var lower = sampleMean - margin;
+        var upper = sampleMean + margin;
+        return {
+          data: data,
+          sampleMean: sampleMean,
+          sampleSd: sampleSd,
+          lower: lower,
+          upper: upper,
+          covers: lower <= mu && mu <= upper
+        };
+      }
+
+      function prepareRun() {
+        repetitions = Array.from({ length: M }, function () { return generateRepetition(); });
+        var allData = [];
+        repetitions.forEach(function (record) {
+          Array.prototype.push.apply(allData, record.data);
+        });
+
+        var dataMinimum = Math.min.apply(null, [mu - 4 * sigma].concat(allData));
+        var dataMaximum = Math.max.apply(null, [mu + 4 * sigma].concat(allData));
+        var dataPad = Math.max(0.05, (dataMaximum - dataMinimum) * 0.025);
+        sampleXDomain = [dataMinimum - dataPad, dataMaximum + dataPad];
+
+        var lowers = repetitions.map(function (record) { return record.lower; });
+        var uppers = repetitions.map(function (record) { return record.upper; });
+        var intervalMinimum = Math.min.apply(null, [mu - 0.8 * sigma].concat(lowers));
+        var intervalMaximum = Math.max.apply(null, [mu + 0.8 * sigma].concat(uppers));
+        var intervalPad = Math.max(0.03, (intervalMaximum - intervalMinimum) * 0.06);
+        intervalYDomain = [intervalMinimum - intervalPad, intervalMaximum + intervalPad];
+      }
+
+      function visibleCount() {
+        if (currentStep < 2) return 0;
+        if (currentStep <= 3) return 1;
+        if (currentStep === 4) return 2;
+        if (currentStep === 5) return 3;
+        return automaticCount;
+      }
+
+      function countCovered(records) {
+        return records.reduce(function (total, record) {
+          return total + (record.covers ? 1 : 0);
+        }, 0);
+      }
+
+      function renderStep(scrollTarget) {
+        pageShell.setAttribute("data-repetition-mode", currentStep >= 4 ? "true" : "false");
+        methodSection.hidden = currentStep < 1;
+        sampleSection.hidden = currentStep < 2;
+        planSection.hidden = currentStep < 3;
+        manualSection.hidden = currentStep < 4 || currentStep > 5;
+        automationSection.hidden = currentStep < 6;
+        backButton.disabled = currentStep === 0;
+        nextButton.hidden = currentStep === 6;
+        stepCount.textContent = "Step " + (currentStep + 1) + " of 7";
+
+        var labels = [
+          "Continue",
+          "Draw the first sample",
+          "Continue",
+          "Generate repetition 2",
+          "Generate repetition 3",
+          "Run remaining 97"
+        ];
+        if (currentStep < labels.length) nextButton.textContent = labels[currentStep];
+
+        if (currentStep >= 2) renderExperiment();
+        if (currentStep === 4 || currentStep === 5) renderManualMessage();
+        if (currentStep === 6) renderAutomation();
+
+        if (scrollTarget) {
+          window.requestAnimationFrame(function () {
+            var target = document.getElementById(scrollTarget);
+            var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (target && target.scrollIntoView) {
+              target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+            }
+          });
+        }
+      }
+
+      function advanceStep() {
+        if (currentStep === 0) {
+          currentStep = 1;
+          renderStep("method-section");
+          return;
+        }
+        if (currentStep === 1) {
+          currentStep = 2;
+          renderStep("sample-section");
+          return;
+        }
+        if (currentStep === 2) {
+          currentStep = 3;
+          renderStep("plan-section");
+          return;
+        }
+        if (currentStep === 3) {
+          currentStep = 4;
+          renderStep("manual-section");
+          return;
+        }
+        if (currentStep === 4) {
+          currentStep = 5;
+          renderStep("manual-section");
+          return;
+        }
+        if (currentStep === 5) {
+          currentStep = 6;
+          automaticCount = 3;
+          renderStep("automation-section");
+          startAutomaticRun();
+        }
+      }
+
+      function goBack() {
+        if (currentStep === 0) return;
+        if (currentStep === 6) {
+          stopAutomaticRun();
+          automaticCount = 3;
+          autoComplete = false;
+          finalAnalysis.hidden = true;
+          currentStep = 5;
+          renderStep("manual-section");
+          return;
+        }
+        currentStep -= 1;
+        var targets = ["problem-section", "method-section", "sample-section", "plan-section", "manual-section", "manual-section"];
+        renderStep(targets[currentStep]);
+      }
+
+      function resetExperiment() {
+        stopAutomaticRun();
+        chooseNewSource(mu, sigma);
+        prepareRun();
+        currentStep = 0;
+        automaticCount = 3;
+        autoComplete = false;
+        finalAnalysis.hidden = true;
+        simulationAnnouncement.textContent = "";
+        renderStep();
+        if (window.scrollTo) {
+          var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+        }
+      }
+
+      function renderExperiment() {
+        var count = visibleCount();
+        if (!count) return;
+        var visibleRecords = repetitions.slice(0, count);
+        var current = visibleRecords[visibleRecords.length - 1];
+        var covered = countCovered(visibleRecords);
+        var percentage = 100 * covered / count;
+
+        truthCopy.innerHTML = "The source used <strong>μ = " + formatNumber(mu, 1) + "</strong> and <strong>σ = " + formatNumber(sigma, 1) + "</strong> (σ² = " + formatNumber(sigma * sigma, 2) + "). The dashed references mark the true μ.";
+        sourceSpec.textContent = "μ = " + formatNumber(mu, 1) + " · σ = " + formatNumber(sigma, 1);
+        currentRepetition.textContent = "Repetition " + count + " · n = 50";
+        currentMean.textContent = formatNumber(current.sampleMean);
+        currentSd.textContent = formatNumber(current.sampleSd);
+        currentInterval.textContent = "[" + formatNumber(current.lower) + ", " + formatNumber(current.upper) + "]";
+        currentOutcome.textContent = current.covers ? "Contains μ" : "Misses μ";
+        currentOutcome.className = "outcome " + (current.covers ? "cover" : "miss");
+        coverageCountElement.textContent = "Covered " + covered + " / " + count + " (" + formatNumber(percentage, 1) + "%)";
+
+        sampleMessage.innerHTML = current.covers
+          ? "<strong>This interval contains μ.</strong> Its endpoints came from this sample; a different sample gives a different interval."
+          : "<strong>This interval misses μ.</strong> A confidence method can miss on an individual repetition even when its long-run coverage is high.";
+
+        renderTable(visibleRecords);
+        drawSampleChart(current);
+        drawIntervalChart(visibleRecords);
+      }
+
+      function renderTable(records) {
+        recordCount.textContent = records.length + " / " + M;
+        recordsBody.innerHTML = records.map(function (record, index) {
+          var currentClass = index === records.length - 1 ? " current-row" : "";
+          var missClass = record.covers ? "" : " miss-row";
+          var resultClass = record.covers ? "result-cell" : "result-cell miss";
+          return "<tr class=\"" + (currentClass + missClass).trim() + "\"><td>" + (index + 1) + "</td><td>" + formatNumber(record.lower) + "</td><td>" + formatNumber(record.upper) + "</td><td class=\"" + resultClass + "\">" + (record.covers ? "Contains μ" : "Misses μ") + "</td></tr>";
+        }).join("");
+
+        if (currentStep === 6 && !autoComplete) {
+          window.requestAnimationFrame(function () {
+            tableWrap.scrollTop = tableWrap.scrollHeight;
+          });
+        }
+      }
+
+      function renderManualMessage() {
+        var repetitionNumber = currentStep === 4 ? 2 : 3;
+        var record = repetitions[repetitionNumber - 1];
+        manualCopy.textContent = "Repetition " + repetitionNumber + " uses a fresh sample of 50 observations from the same source.";
+        manualNote.innerHTML = "<strong>Recorded:</strong> [" + formatNumber(record.lower) + ", " + formatNumber(record.upper) + "] · " + (record.covers ? "Contains μ" : "Misses μ");
+      }
+
+      function startAutomaticRun() {
+        stopAutomaticRun();
+        automaticCount = 3;
+        autoComplete = false;
+        renderAutomation();
+
+        autoTimer = window.setInterval(function () {
+          automaticCount += 1;
+          renderExperiment();
+          renderAutomation();
+
+          if (automaticCount % 10 === 0 && automaticCount < M) {
+            var covered = countCovered(repetitions.slice(0, automaticCount));
+            simulationAnnouncement.textContent = automaticCount + " of 100 repetitions complete; " + covered + " intervals contain mu.";
+          }
+          if (automaticCount >= M) {
+            automaticCount = M;
+            stopAutomaticRun();
+            autoComplete = true;
+            renderExperiment();
+            renderAutomation();
+            var finalCovered = countCovered(repetitions);
+            simulationAnnouncement.textContent = "All 100 repetitions are complete. " + finalCovered + " intervals contain mu.";
+          }
+        }, AUTO_DELAY_MS);
+      }
+
+      function stopAutomaticRun() {
+        if (autoTimer !== null) {
+          window.clearInterval(autoTimer);
+          autoTimer = null;
+        }
+      }
+
+      function renderAutomation() {
+        var completed = automaticCount;
+        progressValue.textContent = completed + " / " + M + " repetitions";
+        progressBar.style.width = Math.min(100, completed) + "%";
+        simulationProgress.setAttribute("aria-valuenow", String(completed));
+
+        if (autoComplete) {
+          var covered = countCovered(repetitions);
+          automationCopy.textContent = "All 100 intervals are recorded. Final tally: " + covered + " of 100 contained μ (" + formatNumber(100 * covered / M, 1) + "%). Details appear below the charts.";
+          progressTime.textContent = "Complete";
+          finalAnalysis.hidden = false;
+          renderFinalAnalysis();
+        } else {
+          var seconds = Math.max(0, (M - completed) * AUTO_DELAY_MS / 1000);
+          automationCopy.textContent = "Revealing the remaining repetitions and updating every view in real time.";
+          progressTime.textContent = "About " + Math.ceil(seconds) + " seconds remaining";
+          finalAnalysis.hidden = true;
+        }
+      }
+
+      function renderFinalAnalysis() {
+        var covered = countCovered(repetitions);
+        var missed = M - covered;
+        var percentage = 100 * covered / M;
+        coverageNumber.textContent = formatNumber(percentage, 1) + "%";
+        coverageSummary.innerHTML = "This run contained μ in <strong>" + covered + " of 100 intervals</strong> and missed it in " + missed + ". A new set of samples will give a slightly different tally.";
+        coverageInterpretation.innerHTML = "The requested 1.96-based rule has long-run coverage of about <strong>" + formatNumber(100 * THEORETICAL_COVERAGE, 2) + "%</strong> here because S is estimated. Using the t<sub>49</sub> cutoff 2.0096 gives the exact 95% Normal-theory interval.";
+      }
+
+      function buildHistogram(values, domain, binCount) {
+        var width = (domain[1] - domain[0]) / binCount;
+        var bins = Array.from({ length: binCount }, function (_, index) {
+          return {
+            x0: domain[0] + index * width,
+            x1: domain[0] + (index + 1) * width,
+            count: 0,
+            density: 0
+          };
+        });
+
+        values.forEach(function (value) {
+          var rawIndex = Math.floor((value - domain[0]) / width);
+          var index = Math.max(0, Math.min(binCount - 1, rawIndex));
+          bins[index].count += 1;
+        });
+        bins.forEach(function (bin) {
+          bin.density = bin.count / (values.length * width);
+        });
+        return bins;
+      }
+
+      function niceTicks(minimum, maximum, targetCount) {
+        var rawStep = (maximum - minimum) / Math.max(1, targetCount);
+        var magnitude = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
+        var residual = rawStep / magnitude;
+        var niceResidual = residual <= 1 ? 1 : residual <= 2 ? 2 : residual <= 5 ? 5 : 10;
+        var step = niceResidual * magnitude;
+        var start = Math.ceil(minimum / step) * step;
+        var ticks = [];
+        for (var value = start; value <= maximum + step * 0.2; value += step) {
+          ticks.push(Math.abs(value) < step * 1e-8 ? 0 : value);
+        }
+        return ticks;
+      }
+
+      function chartSize(wrap, type) {
+        var width = Math.max(220, Math.round(wrap.getBoundingClientRect().width || 640));
+        var compact = currentStep >= 4;
+        var height = type === "interval" ? (compact ? 270 : 300) : (compact ? 236 : 270);
+        return { width: width, height: height };
+      }
+
+      function drawSampleChart(record) {
+        var size = chartSize(sampleChartWrap, "sample");
+        var width = size.width;
+        var height = size.height;
+        var margin = { top: 16, right: 16, bottom: 50, left: width < 420 ? 49 : 57 };
+        var plotWidth = width - margin.left - margin.right;
+        var plotHeight = height - margin.top - margin.bottom;
+        var plotBottom = margin.top + plotHeight;
+        var bins = buildHistogram(record.data, sampleXDomain, HISTOGRAM_BINS);
+        var yMax = Math.max.apply(null, bins.map(function (bin) { return bin.density; })) * 1.16;
+        var xScale = function (value) { return margin.left + (value - sampleXDomain[0]) / (sampleXDomain[1] - sampleXDomain[0]) * plotWidth; };
+        var yScale = function (value) { return margin.top + plotHeight - value / yMax * plotHeight; };
+        var xTicks = niceTicks(sampleXDomain[0], sampleXDomain[1], width < 340 ? 3 : width < 520 ? 4 : 6);
+        var yTicks = niceTicks(0, yMax, 4);
+        var clipId = "normal-sample-clip";
+        sampleChartDescription.textContent = "Histogram of 50 observations in repetition " + visibleCount() + ". The sample mean is " + formatNumber(record.sampleMean) + ", the sample standard deviation is " + formatNumber(record.sampleSd) + ", and the true mean is " + formatNumber(mu, 1) + ".";
+
+        var svg = "<title>Histogram of the current Normal sample</title><desc>" + sampleChartDescription.textContent + "</desc>";
+        svg += "<defs><clipPath id=\"" + clipId + "\"><rect x=\"" + margin.left + "\" y=\"" + margin.top + "\" width=\"" + plotWidth + "\" height=\"" + plotHeight + "\"></rect></clipPath></defs>";
+        svg += "<rect class=\"plot-background\" x=\"" + margin.left + "\" y=\"" + margin.top + "\" width=\"" + plotWidth + "\" height=\"" + plotHeight + "\"></rect>";
+
+        yTicks.forEach(function (tick) {
+          var y = yScale(tick);
+          svg += "<line class=\"grid-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + y + "\" y2=\"" + y + "\"></line>";
+          svg += "<text class=\"axis-text\" x=\"" + (margin.left - 8) + "\" y=\"" + (y + 4) + "\" text-anchor=\"end\">" + formatAxis(tick) + "</text>";
+        });
+        xTicks.forEach(function (tick) {
+          var x = xScale(tick);
+          svg += "<line class=\"axis-line\" x1=\"" + x + "\" x2=\"" + x + "\" y1=\"" + plotBottom + "\" y2=\"" + (plotBottom + 5) + "\"></line>";
+          svg += "<text class=\"axis-text\" x=\"" + x + "\" y=\"" + (plotBottom + 20) + "\" text-anchor=\"middle\">" + formatAxis(tick) + "</text>";
+        });
+
+        svg += "<g clip-path=\"url(#" + clipId + ")\">";
+        bins.forEach(function (bin, index) {
+          var x = xScale(bin.x0);
+          var barWidth = Math.max(0, xScale(bin.x1) - x - 1);
+          var y = yScale(bin.density);
+          svg += "<rect class=\"histogram-bar\" x=\"" + x + "\" y=\"" + y + "\" width=\"" + barWidth + "\" height=\"" + (plotBottom - y) + "\"><title>Bin " + (index + 1) + ": " + bin.count + " observations</title></rect>";
+        });
+        svg += "<line class=\"truth-line\" x1=\"" + xScale(mu) + "\" x2=\"" + xScale(mu) + "\" y1=\"" + margin.top + "\" y2=\"" + plotBottom + "\"></line></g>";
+        svg += "<text class=\"truth-label\" x=\"" + (xScale(mu) + 5) + "\" y=\"" + (margin.top + 13) + "\">μ</text>";
+        svg += "<line class=\"axis-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + plotBottom + "\" y2=\"" + plotBottom + "\"></line>";
+        svg += "<text class=\"axis-title\" x=\"" + (margin.left + plotWidth / 2) + "\" y=\"" + (height - 7) + "\" text-anchor=\"middle\">Observed value</text>";
+        svg += "<text class=\"axis-title\" transform=\"translate(14 " + (margin.top + plotHeight / 2) + ") rotate(-90)\" text-anchor=\"middle\">Density</text>";
+
+        sampleChart.setAttribute("viewBox", "0 0 " + width + " " + height);
+        sampleChart.setAttribute("width", String(width));
+        sampleChart.setAttribute("height", String(height));
+        sampleChart.innerHTML = svg;
+      }
+
+      function drawIntervalChart(records) {
+        var size = chartSize(intervalChartWrap, "interval");
+        var width = size.width;
+        var height = size.height;
+        var margin = { top: 17, right: 25, bottom: 50, left: width < 430 ? 53 : 64 };
+        var plotWidth = width - margin.left - margin.right;
+        var plotHeight = height - margin.top - margin.bottom;
+        var plotBottom = margin.top + plotHeight;
+        var xMaximum = currentStep < 6 ? 3 : M;
+        var xScale = function (repetition) {
+          return margin.left + 5 + (repetition - 1) / (xMaximum - 1) * (plotWidth - 10);
+        };
+        var yScale = function (value) {
+          return margin.top + (intervalYDomain[1] - value) / (intervalYDomain[1] - intervalYDomain[0]) * plotHeight;
+        };
+        var yTicks = niceTicks(intervalYDomain[0], intervalYDomain[1], 5);
+        var xTicks = currentStep < 6 ? [1, 2, 3] : (width < 430 ? [1, 50, 100] : [1, 25, 50, 75, 100]);
+        var clipId = "confidence-interval-clip";
+        var covered = countCovered(records);
+        var narrow = width < 500;
+        var dense = records.length > 60 && narrow;
+        intervalChartDescription.textContent = records.length + " confidence intervals are displayed as vertical segments. " + covered + " contain the fixed true mean " + formatNumber(mu, 1) + ", marked by a dashed horizontal line.";
+
+        var svg = "<title>Confidence intervals by repetition</title><desc>" + intervalChartDescription.textContent + "</desc>";
+        svg += "<defs><clipPath id=\"" + clipId + "\"><rect x=\"" + margin.left + "\" y=\"" + margin.top + "\" width=\"" + plotWidth + "\" height=\"" + plotHeight + "\"></rect></clipPath></defs>";
+        svg += "<rect class=\"plot-background\" x=\"" + margin.left + "\" y=\"" + margin.top + "\" width=\"" + plotWidth + "\" height=\"" + plotHeight + "\"></rect>";
+
+        yTicks.forEach(function (tick) {
+          var y = yScale(tick);
+          svg += "<line class=\"grid-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + y + "\" y2=\"" + y + "\"></line>";
+          svg += "<text class=\"axis-text\" x=\"" + (margin.left - 8) + "\" y=\"" + (y + 4) + "\" text-anchor=\"end\">" + formatAxis(tick) + "</text>";
+        });
+        xTicks.forEach(function (tick) {
+          var x = xScale(tick);
+          svg += "<line class=\"axis-line\" x1=\"" + x + "\" x2=\"" + x + "\" y1=\"" + plotBottom + "\" y2=\"" + (plotBottom + 5) + "\"></line>";
+          svg += "<text class=\"axis-text\" x=\"" + x + "\" y=\"" + (plotBottom + 20) + "\" text-anchor=\"middle\">" + tick + "</text>";
+        });
+
+        svg += "<g clip-path=\"url(#" + clipId + ")\">";
+        records.forEach(function (record, index) {
+          var x = xScale(index + 1);
+          var upperY = yScale(record.upper);
+          var lowerY = yScale(record.lower);
+          var stateClass = record.covers ? "" : " miss";
+          var densityClass = dense ? " dense" : "";
+          var currentClass = index === records.length - 1 ? " current" : "";
+          var cap = records.length > 60 ? 1.8 : 3;
+          var outcome = record.covers ? "contains" : "misses";
+          svg += "<g class=\"ci-group" + currentClass + "\"><title>Repetition " + (index + 1) + ": interval " + formatNumber(record.lower) + " to " + formatNumber(record.upper) + "; " + outcome + " mu</title>";
+          svg += "<line class=\"ci-line" + stateClass + densityClass + "\" x1=\"" + x + "\" x2=\"" + x + "\" y1=\"" + upperY + "\" y2=\"" + lowerY + "\"></line>";
+          if (!narrow) {
+            svg += "<line class=\"ci-cap" + stateClass + "\" x1=\"" + (x - cap) + "\" x2=\"" + (x + cap) + "\" y1=\"" + upperY + "\" y2=\"" + upperY + "\"></line>";
+            svg += "<line class=\"ci-cap" + stateClass + "\" x1=\"" + (x - cap) + "\" x2=\"" + (x + cap) + "\" y1=\"" + lowerY + "\" y2=\"" + lowerY + "\"></line>";
+          }
+          svg += "</g>";
+        });
+        var truthY = yScale(mu);
+        svg += "<line class=\"truth-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + truthY + "\" y2=\"" + truthY + "\"></line></g>";
+        var labelY = truthY < margin.top + 16 ? truthY + 14 : truthY - 5;
+        svg += "<text class=\"truth-label\" x=\"" + (margin.left + plotWidth - 5) + "\" y=\"" + labelY + "\" text-anchor=\"end\">true μ = " + formatNumber(mu, 1) + "</text>";
+        svg += "<line class=\"axis-line\" x1=\"" + margin.left + "\" x2=\"" + (margin.left + plotWidth) + "\" y1=\"" + plotBottom + "\" y2=\"" + plotBottom + "\"></line>";
+        svg += "<text class=\"axis-title\" x=\"" + (margin.left + plotWidth / 2) + "\" y=\"" + (height - 7) + "\" text-anchor=\"middle\">Repetition</text>";
+        svg += "<text class=\"axis-title\" transform=\"translate(14 " + (margin.top + plotHeight / 2) + ") rotate(-90)\" text-anchor=\"middle\">Value</text>";
+
+        intervalChart.setAttribute("viewBox", "0 0 " + width + " " + height);
+        intervalChart.setAttribute("width", String(width));
+        intervalChart.setAttribute("height", String(height));
+        intervalChart.innerHTML = svg;
+      }
+
+      function scheduleChartRedraw() {
+        if (resizeFrame !== null) return;
+        resizeFrame = window.requestAnimationFrame(function () {
+          resizeFrame = null;
+          if (currentStep >= 2) renderExperiment();
+        });
+      }
+
+      nextButton.addEventListener("click", advanceStep);
+      backButton.addEventListener("click", goBack);
+      retryButton.addEventListener("click", resetExperiment);
+
+      if ("ResizeObserver" in window) {
+        var observer = new ResizeObserver(scheduleChartRedraw);
+        observer.observe(sampleChartWrap);
+        observer.observe(intervalChartWrap);
+      } else {
+        window.addEventListener("resize", scheduleChartRedraw);
+      }
+
+      resetExperiment();
+    })();
+  </script>
+</body>
+</html>
