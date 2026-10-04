@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive lesson showing how asbestos-fiber count data determine the Poisson maximum likelihood estimate.">
+  <title>Poisson Maximum Likelihood — Data Sensitivity</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #0b1f33;
+      --ink-soft: #526579;
+      --paper: #f5f7fa;
+      --surface: #ffffff;
+      --surface-soft: #edf2f7;
+      --oxford: #002147;
+      --oxford-deep: #00152e;
+      --blue: #3973a1;
+      --blue-soft: #dce8f2;
+      --line: #d7e0e8;
+      --grid: #e9eef3;
+      --accent: #a33b49;
+      --accent-soft: #f6e9eb;
+      --focus: #1f6fa8;
+      --good: #236947;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    button,
+    input { font: inherit; }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px var(--focus);
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin-top: 0; }
+
+    .page-shell {
+      width: min(1420px, 100%);
+      margin: 0 auto;
+      padding: clamp(22px, 3.5vw, 44px) clamp(13px, 3vw, 38px) 34px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 18px;
+      padding-bottom: 18px;
+    }
+
+    h1 {
+      max-width: 850px;
+      margin-bottom: 8px;
+      color: var(--oxford);
+      font-size: clamp(2rem, 4.1vw, 3.5rem);
+      font-weight: 770;
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+
+    .hero p {
+      max-width: 790px;
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: clamp(0.92rem, 1.4vw, 1.04rem);
+    }
+
+    .source-tag {
+      margin-bottom: 2px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .intro-card,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .intro-card {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.8fr) minmax(480px, 1.7fr);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .context,
+    .derivation { padding: 16px 18px; }
+
+    .context {
+      border-right: 1px solid var(--line);
+      background: var(--surface-soft);
+    }
+
+    .eyebrow {
+      margin-bottom: 5px;
+      color: var(--blue);
+      font-size: 0.68rem;
+      font-weight: 780;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .intro-card h2,
+    .panel h2 {
+      margin-bottom: 5px;
+      color: var(--oxford);
+      font-size: 1rem;
+      font-weight: 750;
+      letter-spacing: -0.015em;
+    }
+
+    .intro-card p,
+    .panel-note {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.79rem;
+    }
+
+    .formula-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px 24px;
+      margin-top: 8px;
+      color: var(--oxford);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(0.96rem, 1.35vw, 1.11rem);
+    }
+
+    .formula-line strong { color: var(--accent); }
+
+    .formula-detail {
+      margin-top: 7px;
+      color: var(--ink-soft);
+      font-size: 0.73rem;
+    }
+
+    .summary-banner {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(110px, auto)) minmax(220px, 1fr);
+      align-items: center;
+      gap: 5px 18px;
+      min-height: 50px;
+      margin-bottom: 12px;
+      padding: 8px 13px;
+      border-radius: 9px;
+      background: var(--oxford);
+      color: #fff;
+      font-size: 0.7rem;
+    }
+
+    .stat-label {
+      display: block;
+      color: #bcd0e0;
+      font-size: 0.61rem;
+      font-weight: 700;
+      letter-spacing: 0.065em;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 0.91rem;
+      font-weight: 760;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .change-note {
+      justify-self: end;
+      color: #e1ebf3;
+      font-size: 0.72rem;
+      text-align: right;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(350px, 0.42fr) minmax(600px, 1fr);
+      align-items: start;
+      gap: 12px;
+    }
+
+    .panel { min-width: 0; }
+
+    .data-panel { padding: 15px; }
+
+    .panel-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 11px;
+    }
+
+    .panel-head h2 { margin-bottom: 2px; }
+
+    .button {
+      min-height: 36px;
+      padding: 6px 11px;
+      border: 1px solid var(--oxford);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--oxford);
+      font-size: 0.72rem;
+      font-weight: 740;
+      cursor: pointer;
+    }
+
+    .button:hover { background: var(--blue-soft); }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 330px;
+      border-collapse: collapse;
+      font-size: 0.73rem;
+    }
+
+    th,
+    td {
+      padding: 5px 4px;
+      border-bottom: 1px solid var(--grid);
+      text-align: center;
+    }
+
+    th {
+      background: var(--surface-soft);
+      color: var(--oxford);
+      font-size: 0.64rem;
+      font-weight: 760;
+      letter-spacing: 0.035em;
+      text-transform: uppercase;
+    }
+
+    tbody tr:last-child td { border-bottom: 0; }
+
+    td.square {
+      width: 32px;
+      color: var(--ink-soft);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .count-input {
+      width: 52px;
+      min-height: 31px;
+      padding: 3px 5px;
+      border: 1px solid #bcc9d5;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
+
+    .count-input[aria-invalid="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .validation {
+      min-height: 34px;
+      margin: 8px 1px 0;
+      color: var(--ink-soft);
+      font-size: 0.7rem;
+    }
+
+    .validation.error { color: var(--accent); font-weight: 680; }
+
+    .sensitivity-note {
+      margin-top: 9px;
+      padding: 9px 10px;
+      border-left: 3px solid var(--blue);
+      background: var(--surface-soft);
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+    }
+
+    .sensitivity-note strong { color: var(--oxford); }
+
+    .visuals { display: grid; gap: 12px; }
+
+    .chart-panel { padding: 13px 14px 10px; }
+
+    .chart-heading {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: start;
+      justify-content: space-between;
+      gap: 4px 14px;
+      margin-bottom: 2px;
+    }
+
+    .chart-heading h2 { margin-bottom: 0; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      color: var(--ink-soft);
+      font-size: 0.65rem;
+    }
+
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+
+    .legend-swatch {
+      width: 16px;
+      height: 7px;
+      border-radius: 2px;
+      background: var(--oxford);
+      opacity: 0.82;
+    }
+
+    .legend-pmf {
+      position: relative;
+      width: 16px;
+      height: 10px;
+      border-bottom: 2px solid var(--blue);
+    }
+
+    .legend-pmf::after {
+      position: absolute;
+      right: 0;
+      bottom: -3px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--blue);
+      content: "";
+    }
+
+    .curve-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .chart-wrap { width: 100%; min-height: 0; }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .histogram-svg { aspect-ratio: 3.45 / 1; }
+    .curve-svg { aspect-ratio: 2.15 / 1; }
+
+    .axis { stroke: #8294a5; stroke-width: 1; }
+    .grid-line { stroke: var(--grid); stroke-width: 1; }
+    .tick-text { fill: var(--ink-soft); font-size: 10px; }
+    .axis-label { fill: var(--ink-soft); font-size: 10px; font-weight: 680; }
+    .bar { fill: var(--oxford); opacity: 0.8; }
+    .pmf-stem { stroke: var(--blue); stroke-width: 1.4; opacity: 0.78; }
+    .pmf-dot { fill: var(--blue); stroke: #fff; stroke-width: 1; }
+    .curve { fill: none; stroke: var(--oxford); stroke-width: 2.4; }
+    .maximum-line { stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 5 4; }
+    .maximum-dot { fill: var(--accent); stroke: #fff; stroke-width: 1.4; }
+    .maximum-label { fill: var(--accent); font-size: 10px; font-weight: 760; }
+    .previous-line { stroke: #8294a5; stroke-width: 1.2; stroke-dasharray: 2 4; }
+    .previous-label { fill: #64788b; font-size: 9px; }
+
+    .curve-caption {
+      min-height: 28px;
+      margin: 1px 2px 0;
+      color: var(--ink-soft);
+      font-size: 0.66rem;
+    }
+
+    .insight {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 9px;
+      background: var(--blue-soft);
+      color: var(--ink-soft);
+      font-size: 0.76rem;
+    }
+
+    .insight strong { color: var(--oxford); }
+
+    .insight-mark {
+      display: grid;
+      width: 25px;
+      height: 25px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--oxford);
+      color: #fff;
+      font-family: Georgia, serif;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1050px) {
+      .workspace { grid-template-columns: 1fr; }
+      .intro-card { grid-template-columns: 1fr; }
+      .context { border-right: 0; border-bottom: 1px solid var(--line); }
+      .summary-banner { grid-template-columns: repeat(4, 1fr); }
+      .change-note { grid-column: 1 / -1; justify-self: start; text-align: left; }
+      .data-panel { order: 0; }
+      .visuals { order: 1; }
+    }
+
+    @media (max-width: 680px) {
+      .page-shell { padding-inline: 11px; }
+      .hero { grid-template-columns: 1fr; }
+      .source-tag { justify-self: start; }
+      .summary-banner { grid-template-columns: repeat(2, 1fr); }
+      .curve-grid { grid-template-columns: 1fr; }
+      .histogram-svg { aspect-ratio: 2 / 1; }
+      .curve-svg { aspect-ratio: 1.9 / 1; }
+      .insight { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
+    }
+
+    @media (pointer: coarse) {
+      .button { min-height: 44px; }
+      .count-input { min-height: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <div>
+        <h1>Poisson maximum likelihood: how data shape the estimate</h1>
+        <p>Edit any fiber count and watch the fitted model, likelihood, and maximizing value respond immediately.</p>
+      </div>
+      <div class="source-tag">Statistics 5102 · Note 8</div>
+    </header>
+
+    <section class="intro-card" aria-labelledby="model-title">
+      <div class="context">
+        <p class="eyebrow">The asbestos data</p>
+        <h2 id="model-title">Counts in 23 grid squares</h2>
+        <p>A study counted asbestos fibers in each of 23 grid squares on a filter. A Poisson model is plausible for the square-to-square variation: counts are nonnegative, and one common rate governs the squares. Here λ is the expected fiber count per square, and the model mean and variance both equal λ.</p>
+      </div>
+      <div class="derivation">
+        <p class="eyebrow">From model to maximum likelihood estimate</p>
+        <div class="formula-line">
+          <span>X<sub>1</sub>, …, X<sub>n</sub> ∼ Poisson(λ), independently and identically distributed, λ ≥ 0</span>
+          <span>P(X = x | λ) = e<sup>−λ</sup>λ<sup>x</sup>/x!, x = 0, 1, …</span>
+        </div>
+        <div class="formula-line">
+          <span>L(λ) = e<sup>−nλ</sup>λ<sup>Σxᵢ</sup>/∏xᵢ!</span>
+          <span>ℓ(λ) = −nλ + (Σxᵢ) log λ − Σ log(xᵢ!), λ &gt; 0</span>
+        </div>
+        <div class="formula-line">
+          <span>ℓ′(λ) = Σxᵢ/λ − n = 0</span>
+          <strong>λ̂ = x̄</strong>
+        </div>
+        <div class="formula-detail" id="formula-detail">For these data: L(λ) ∝ e<sup>−23λ</sup>λ<sup>573</sup>, so λ̂ = 573/23 = 24.913.</div>
+      </div>
+    </section>
+
+    <section class="summary-banner" aria-label="Current data summary">
+      <div><span class="stat-label">Squares</span><span class="stat-value" id="n-stat">23</span></div>
+      <div><span class="stat-label">Σxᵢ</span><span class="stat-value" id="sum-stat">573</span></div>
+      <div><span class="stat-label">Sample variance</span><span class="stat-value" id="variance-stat">30.083</span></div>
+      <div><span class="stat-label">x̄ = λ̂</span><span class="stat-value" id="mle-stat">24.913</span></div>
+      <div class="change-note" id="change-note">Original asbestos data · Poisson mean and variance are both λ.</div>
+    </section>
+
+    <div class="workspace">
+      <aside class="panel data-panel" aria-labelledby="data-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="data-title">Edit the observations</h2>
+            <p class="panel-note">Each cell is one grid-square count.</p>
+          </div>
+          <button class="button" id="reset-button" type="button">Restore data</button>
+        </div>
+        <div class="table-wrap">
+          <table aria-labelledby="data-title" aria-describedby="validation-message">
+            <thead>
+              <tr>
+                <th scope="col">Square</th><th scope="col">Count</th>
+                <th scope="col">Square</th><th scope="col">Count</th>
+                <th scope="col">Square</th><th scope="col">Count</th>
+              </tr>
+            </thead>
+            <tbody id="data-body"></tbody>
+          </table>
+        </div>
+        <p class="validation" id="validation-message" role="status" aria-live="polite">Use whole-number counts from 0 to 40. Every valid edit updates all three plots.</p>
+        <div class="sensitivity-note" id="sensitivity-note">
+          <strong>Why the mean?</strong> The score equation sets Σxᵢ/λ − n to zero. With n = 23 fixed, adding 1 to one count raises λ̂ by exactly 1/23 ≈ 0.0435.
+        </div>
+      </aside>
+
+      <section class="visuals" aria-label="Poisson model visualizations">
+        <article class="panel chart-panel">
+          <div class="chart-heading">
+            <div>
+              <h2>Observed counts and fitted Poisson probability mass function</h2>
+              <p class="panel-note">Bar height is the observed proportion at each count.</p>
+            </div>
+            <div class="legend" aria-label="Chart legend">
+              <span class="legend-item"><span class="legend-swatch"></span>Observed</span>
+              <span class="legend-item"><span class="legend-pmf"></span>Poisson(λ̂)</span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <svg class="histogram-svg" id="histogram" viewBox="0 0 900 260" role="img" aria-labelledby="histogram-title histogram-desc">
+              <title id="histogram-title">Histogram and fitted Poisson probability mass function</title>
+              <desc id="histogram-desc">The original asbestos counts and fitted Poisson model.</desc>
+            </svg>
+          </div>
+        </article>
+
+        <div class="curve-grid">
+          <article class="panel chart-panel">
+            <div class="chart-heading">
+              <h2>Likelihood</h2>
+              <span class="panel-note">fixed axes · maximum = 1</span>
+            </div>
+            <svg class="curve-svg" id="likelihood" viewBox="0 0 540 250" role="img" aria-labelledby="likelihood-title likelihood-desc">
+              <title id="likelihood-title">Scaled Poisson likelihood</title>
+              <desc id="likelihood-desc">The likelihood as a function of lambda, with the maximum marked.</desc>
+            </svg>
+            <p class="curve-caption">Relative likelihood prevents underflow; fixed axes reveal changes in location and curvature.</p>
+          </article>
+
+          <article class="panel chart-panel">
+            <div class="chart-heading">
+              <h2>Log-likelihood</h2>
+              <span class="panel-note">fixed axes · actual scale</span>
+            </div>
+            <svg class="curve-svg" id="log-likelihood" viewBox="0 0 540 250" role="img" aria-labelledby="loglik-title loglik-desc">
+              <title id="loglik-title">Poisson log-likelihood</title>
+              <desc id="loglik-desc">The log-likelihood as a function of lambda, with the maximum marked.</desc>
+            </svg>
+            <p class="curve-caption">The displayed coordinates stay at 0 ≤ λ ≤ 42 and −400 ≤ ℓ(λ) ≤ 5; off-scale tails are clipped.</p>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <section class="insight" aria-label="Key statistical insight">
+      <span class="insight-mark">Σ</span>
+      <div><strong>The maximum likelihood estimate depends on the data through their sum.</strong> Raising one observation by Δ raises λ̂ by Δ/n. Redistributing counts without changing the sum leaves λ̂ unchanged—even though the absolute height of the likelihood can change through ∏xᵢ!. The likelihood is a function of λ after the observations are fixed; it is not a probability distribution for λ.</div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const ORIGINAL = [31, 29, 19, 18, 31, 28, 34, 27, 34, 30, 16, 18, 26, 27, 27, 18, 24, 22, 28, 24, 21, 17, 24];
+      const ORIGINAL_MEAN = ORIGINAL.reduce((total, value) => total + value, 0) / ORIGINAL.length;
+      const MAX_COUNT = 40;
+      const CURVE_X_DOMAIN = [0, 42];
+      const LIKELIHOOD_Y_DOMAIN = [0, 1.08];
+      const LOG_LIKELIHOOD_Y_DOMAIN = [-400, 5];
+      const NS = "http://www.w3.org/2000/svg";
+
+      const dataBody = document.getElementById("data-body");
+      const resetButton = document.getElementById("reset-button");
+      const validationMessage = document.getElementById("validation-message");
+      const changeNote = document.getElementById("change-note");
+      const formulaDetail = document.getElementById("formula-detail");
+      const sensitivityNote = document.getElementById("sensitivity-note");
+      const nStat = document.getElementById("n-stat");
+      const sumStat = document.getElementById("sum-stat");
+      const varianceStat = document.getElementById("variance-stat");
+      const mleStat = document.getElementById("mle-stat");
+      const histogramSvg = document.getElementById("histogram");
+      const likelihoodSvg = document.getElementById("likelihood");
+      const logLikelihoodSvg = document.getElementById("log-likelihood");
+
+      let currentData = ORIGINAL.slice();
+      let previousEstimate = null;
+      let lastChangedIndex = null;
+      let lastChangedFrom = null;
+
+      function svgElement(name, attributes = {}, text = "") {
+        const node = document.createElementNS(NS, name);
+        Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, String(value)));
+        if (text !== "") node.textContent = text;
+        return node;
+      }
+
+      function append(parent, name, attributes = {}, text = "") {
+        const node = svgElement(name, attributes, text);
+        parent.appendChild(node);
+        return node;
+      }
+
+      function buildTable() {
+        dataBody.replaceChildren();
+        for (let row = 0; row < 8; row += 1) {
+          const tr = document.createElement("tr");
+          [row, row + 8, row + 16].forEach((index) => {
+            const squareCell = document.createElement("td");
+            const countCell = document.createElement("td");
+            squareCell.className = "square";
+
+            if (index < ORIGINAL.length) {
+              squareCell.textContent = String(index + 1);
+              const input = document.createElement("input");
+              input.className = "count-input";
+              input.type = "number";
+              input.min = "0";
+              input.max = String(MAX_COUNT);
+              input.step = "1";
+              input.value = String(ORIGINAL[index]);
+              input.dataset.index = String(index);
+              input.setAttribute("aria-label", `Fiber count in grid square ${index + 1}`);
+              input.addEventListener("input", handleInput);
+              countCell.appendChild(input);
+            } else {
+              squareCell.setAttribute("aria-hidden", "true");
+              countCell.setAttribute("aria-hidden", "true");
+            }
+
+            tr.append(squareCell, countCell);
+          });
+          dataBody.appendChild(tr);
+        }
+      }
+
+      function inputs() {
+        return Array.from(document.querySelectorAll(".count-input"));
+      }
+
+      function readData() {
+        let valid = true;
+        const values = inputs().map((input) => {
+          const value = Number(input.value);
+          const cellValid = input.value.trim() !== "" && Number.isInteger(value) && value >= 0 && value <= MAX_COUNT;
+          input.setAttribute("aria-invalid", String(!cellValid));
+          if (!cellValid) valid = false;
+          return value;
+        });
+        return { valid, values };
+      }
+
+      function handleInput(event) {
+        const result = readData();
+        if (!result.valid) {
+          validationMessage.setAttribute("role", "alert");
+          validationMessage.className = "validation error";
+          validationMessage.textContent = `Enter a whole-number count from 0 to ${MAX_COUNT} in every cell. The plots retain the last valid data.`;
+          return;
+        }
+
+        const index = Number(event.target.dataset.index);
+        const oldValue = currentData[index];
+        const oldMean = mean(currentData);
+        currentData = result.values;
+        previousEstimate = oldMean;
+        lastChangedIndex = index;
+        lastChangedFrom = oldValue;
+        validationMessage.setAttribute("role", "status");
+        validationMessage.className = "validation";
+        validationMessage.textContent = "Valid edit. The estimate and all plots have been updated.";
+        render();
+      }
+
+      function resetData() {
+        const oldMean = mean(currentData);
+        inputs().forEach((input, index) => {
+          input.value = String(ORIGINAL[index]);
+          input.setAttribute("aria-invalid", "false");
+        });
+        currentData = ORIGINAL.slice();
+        previousEstimate = Math.abs(oldMean - ORIGINAL_MEAN) > 1e-12 ? oldMean : null;
+        lastChangedIndex = null;
+        lastChangedFrom = null;
+        validationMessage.setAttribute("role", "status");
+        validationMessage.className = "validation";
+        validationMessage.textContent = "Original asbestos counts restored.";
+        render();
+      }
+
+      function sum(values) {
+        return values.reduce((total, value) => total + value, 0);
+      }
+
+      function mean(values) {
+        return sum(values) / values.length;
+      }
+
+      function sampleVariance(values, average) {
+        if (values.length < 2) return 0;
+        return values.reduce((total, value) => total + (value - average) ** 2, 0) / (values.length - 1);
+      }
+
+      function fixed(value, digits = 3) {
+        if (!Number.isFinite(value)) return "−∞";
+        return value.toFixed(digits).replace("-", "−");
+      }
+
+      function tickFormat(value) {
+        const absolute = Math.abs(value);
+        if (absolute >= 10000) return value.toExponential(1).replace("-", "−");
+        if (absolute >= 100) return Math.round(value).toString();
+        if (absolute >= 10) return value.toFixed(1).replace(/\.0$/, "");
+        if (absolute >= 1) return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+        return value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+      }
+
+      function niceTicks(minimum, maximum, count = 5) {
+        if (!(maximum > minimum)) return [minimum];
+        const rawStep = (maximum - minimum) / Math.max(1, count);
+        const power = 10 ** Math.floor(Math.log10(rawStep));
+        const error = rawStep / power;
+        const multiplier = error >= 7.5 ? 10 : error >= 3.5 ? 5 : error >= 1.5 ? 2 : 1;
+        const step = multiplier * power;
+        const first = Math.ceil(minimum / step) * step;
+        const ticks = [];
+        for (let value = first; value <= maximum + step * 1e-8; value += step) ticks.push(Number(value.toPrecision(12)));
+        return ticks;
+      }
+
+      function buildLogFactorials(maximum) {
+        const values = new Array(maximum + 1).fill(0);
+        for (let k = 2; k <= maximum; k += 1) values[k] = values[k - 1] + Math.log(k);
+        return values;
+      }
+
+      function clearPlot(svg) {
+        Array.from(svg.children).forEach((child) => {
+          if (child.tagName.toLowerCase() !== "title" && child.tagName.toLowerCase() !== "desc") child.remove();
+        });
+      }
+
+      function drawAxes(svg, dimensions, xDomain, yDomain, options = {}) {
+        const { width, height, left, right, top, bottom } = dimensions;
+        const innerWidth = width - left - right;
+        const innerHeight = height - top - bottom;
+        const x = (value) => left + ((value - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+        const y = (value) => top + innerHeight - ((value - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+        const xTicks = options.xTicks || niceTicks(xDomain[0], xDomain[1], options.xTickCount || 6);
+        const yTicks = options.yTicks || niceTicks(yDomain[0], yDomain[1], options.yTickCount || 4);
+
+        yTicks.forEach((value) => {
+          const py = y(value);
+          append(svg, "line", { x1: left, y1: py, x2: width - right, y2: py, class: "grid-line" });
+          append(svg, "text", { x: left - 7, y: py + 3.5, "text-anchor": "end", class: "tick-text" }, options.yFormat ? options.yFormat(value) : tickFormat(value));
+        });
+
+        xTicks.forEach((value) => {
+          const px = x(value);
+          append(svg, "line", { x1: px, y1: top + innerHeight, x2: px, y2: top + innerHeight + 4, class: "axis" });
+          append(svg, "text", { x: px, y: top + innerHeight + 16, "text-anchor": "middle", class: "tick-text" }, options.xFormat ? options.xFormat(value) : tickFormat(value));
+        });
+
+        append(svg, "line", { x1: left, y1: top + innerHeight, x2: width - right, y2: top + innerHeight, class: "axis" });
+        append(svg, "line", { x1: left, y1: top, x2: left, y2: top + innerHeight, class: "axis" });
+        append(svg, "text", { x: left + innerWidth / 2, y: height - 6, "text-anchor": "middle", class: "axis-label" }, options.xLabel || "");
+        append(svg, "text", { x: 12, y: top + innerHeight / 2, "text-anchor": "middle", class: "axis-label", transform: `rotate(-90 12 ${top + innerHeight / 2})` }, options.yLabel || "");
+        return { x, y, innerWidth, innerHeight };
+      }
+
+      function drawHistogram(values, lambdaHat) {
+        clearPlot(histogramSvg);
+        const title = histogramSvg.querySelector("title");
+        const desc = histogramSvg.querySelector("desc");
+        title.textContent = `Histogram and fitted Poisson probability mass function with lambda hat ${fixed(lambdaHat)}`;
+        desc.textContent = `Observed proportions for 23 grid-square counts and fitted Poisson probabilities. The current maximum likelihood estimate is ${fixed(lambdaHat)}.`;
+
+        const dataMin = Math.min(...values);
+        const dataMax = Math.max(...values);
+        const spread = 4.2 * Math.sqrt(Math.max(lambdaHat, 0.35));
+        const xMin = Math.max(0, Math.floor(Math.min(dataMin - 1, lambdaHat - spread)));
+        const xMax = Math.max(xMin + 5, Math.ceil(Math.max(dataMax + 1, lambdaHat + spread)));
+        const logFacts = buildLogFactorials(xMax);
+        const frequencies = new Map();
+        values.forEach((value) => frequencies.set(value, (frequencies.get(value) || 0) + 1));
+
+        const points = [];
+        let yMax = 0;
+        for (let k = xMin; k <= xMax; k += 1) {
+          const observed = (frequencies.get(k) || 0) / values.length;
+          const fitted = lambdaHat === 0
+            ? (k === 0 ? 1 : 0)
+            : Math.exp(-lambdaHat + k * Math.log(lambdaHat) - logFacts[k]);
+          points.push({ k, observed, fitted });
+          yMax = Math.max(yMax, observed, fitted);
+        }
+        yMax = Math.max(0.05, yMax * 1.18);
+
+        const dimensions = { width: 900, height: 260, left: 58, right: 18, top: 16, bottom: 42 };
+        const xDomain = [xMin - 0.55, xMax + 0.55];
+        const axes = drawAxes(histogramSvg, dimensions, xDomain, [0, yMax], {
+          xLabel: "Fiber count x",
+          yLabel: "Proportion / probability",
+          xTickCount: 9,
+          yTickCount: 4,
+          xFormat: (value) => String(Math.round(value)),
+          yFormat: (value) => value.toFixed(2)
+        });
+
+        const baseline = axes.y(0);
+        const categoryWidth = axes.x(xMin + 0.45) - axes.x(xMin - 0.45);
+        const barWidth = Math.max(1, categoryWidth * 0.74);
+        points.forEach(({ k, observed, fitted }) => {
+          if (observed > 0) {
+            const rect = append(histogramSvg, "rect", {
+              x: axes.x(k) - barWidth / 2,
+              y: axes.y(observed),
+              width: barWidth,
+              height: baseline - axes.y(observed),
+              rx: Math.min(2, barWidth / 4),
+              class: "bar"
+            });
+            append(rect, "title", {}, `x = ${k}; observed proportion = ${fixed(observed, 4)}`);
+          }
+          append(histogramSvg, "line", { x1: axes.x(k), y1: baseline, x2: axes.x(k), y2: axes.y(fitted), class: "pmf-stem" });
+          const dot = append(histogramSvg, "circle", { cx: axes.x(k), cy: axes.y(fitted), r: 3.1, class: "pmf-dot" });
+          append(dot, "title", {}, `x = ${k}; fitted probability = ${fixed(fitted, 4)}`);
+        });
+      }
+
+      function logLikelihood(lambda, total, n, logDenominator) {
+        if (lambda === 0) return total === 0 ? -logDenominator : -Infinity;
+        return total * Math.log(lambda) - n * lambda - logDenominator;
+      }
+
+      function relativeLogLikelihood(lambda, lambdaHat, total, n) {
+        if (lambdaHat === 0) return -n * lambda;
+        if (lambda === 0) return -Infinity;
+        const relativeChange = (lambda - lambdaHat) / lambdaHat;
+        return total * (Math.log1p(relativeChange) - relativeChange);
+      }
+
+      function drawCurve(svg, values, kind, previous) {
+        clearPlot(svg);
+        const total = sum(values);
+        const n = values.length;
+        const lambdaHat = total / n;
+        const maxCount = Math.max(...values);
+        const logFacts = buildLogFactorials(maxCount);
+        const logDenominator = values.reduce((accumulator, value) => accumulator + logFacts[value], 0);
+        const [xMin, xMax] = CURVE_X_DOMAIN;
+        const sampleCount = 600;
+        const curve = [];
+        const ellHat = logLikelihood(lambdaHat, total, n, logDenominator);
+
+        for (let i = 0; i <= sampleCount; i += 1) {
+          const lambda = xMin + ((xMax - xMin) * i) / sampleCount;
+          if (kind === "likelihood") {
+            const relative = relativeLogLikelihood(lambda, lambdaHat, total, n);
+            curve.push({ x: lambda, y: Number.isFinite(relative) ? Math.exp(relative) : 0 });
+          } else {
+            const relative = relativeLogLikelihood(lambda, lambdaHat, total, n);
+            curve.push({ x: lambda, y: Number.isFinite(relative) ? ellHat + relative : -Infinity });
+          }
+        }
+        curve.push({ x: lambdaHat, y: kind === "likelihood" ? 1 : ellHat });
+        curve.sort((a, b) => a.x - b.x);
+
+        const [yMin, yMax] = kind === "likelihood" ? LIKELIHOOD_Y_DOMAIN : LOG_LIKELIHOOD_Y_DOMAIN;
+
+        const dimensions = { width: 540, height: 250, left: 61, right: 16, top: 21, bottom: 42 };
+        const axes = drawAxes(svg, dimensions, [xMin, xMax], [yMin, yMax], {
+          xLabel: "λ",
+          yLabel: kind === "likelihood" ? "Relative likelihood" : "ℓ(λ)",
+          xTickCount: 5,
+          yTickCount: 4
+        });
+
+        const clipId = `${svg.id}-plot-clip`;
+        const definitions = append(svg, "defs");
+        const clipPath = append(definitions, "clipPath", { id: clipId });
+        append(clipPath, "rect", {
+          x: dimensions.left,
+          y: dimensions.top,
+          width: dimensions.width - dimensions.left - dimensions.right,
+          height: dimensions.height - dimensions.top - dimensions.bottom
+        });
+
+        const pathData = curve
+          .filter((point) => Number.isFinite(point.y))
+          .map((point, index) => `${index === 0 ? "M" : "L"}${axes.x(point.x).toFixed(2)},${axes.y(point.y).toFixed(2)}`)
+          .join(" ");
+        append(svg, "path", { d: pathData, class: "curve", "clip-path": `url(#${clipId})` });
+
+        if (previous !== null && previous >= xMin && previous <= xMax && Math.abs(previous - lambdaHat) > 1e-9) {
+          const px = axes.x(previous);
+          const previousAnchor = px > dimensions.width * 0.75 ? "end" : "start";
+          const previousLabelX = previousAnchor === "end" ? px - 4 : px + 4;
+          append(svg, "line", { x1: px, y1: dimensions.top, x2: px, y2: dimensions.height - dimensions.bottom, class: "previous-line" });
+          append(svg, "text", { x: previousLabelX, y: dimensions.top + 10, "text-anchor": previousAnchor, class: "previous-label" }, `previous ${fixed(previous)}`);
+        }
+
+        const maximizerX = axes.x(lambdaHat);
+        const maximizerY = axes.y(kind === "likelihood" ? 1 : ellHat);
+        append(svg, "line", { x1: maximizerX, y1: dimensions.top, x2: maximizerX, y2: dimensions.height - dimensions.bottom, class: "maximum-line" });
+        append(svg, "circle", { cx: maximizerX, cy: maximizerY, r: 4.2, class: "maximum-dot" });
+        const labelAnchor = maximizerX > dimensions.width * 0.7 ? "end" : "start";
+        const labelX = labelAnchor === "end" ? maximizerX - 6 : maximizerX + 6;
+        append(svg, "text", { x: labelX, y: Math.max(dimensions.top + 13, maximizerY - 8), "text-anchor": labelAnchor, class: "maximum-label" }, `maximum λ̂ = ${fixed(lambdaHat)}`);
+
+        const title = svg.querySelector("title");
+        const desc = svg.querySelector("desc");
+        title.textContent = `${kind === "likelihood" ? "Scaled Poisson likelihood" : "Poisson log-likelihood"}; maximum at lambda hat ${fixed(lambdaHat)}`;
+        desc.textContent = `The curve is maximized at the sample mean, ${fixed(lambdaHat)}. ${previous !== null && Math.abs(previous - lambdaHat) > 1e-9 ? `The previous estimate was ${fixed(previous)}.` : ""}`;
+      }
+
+      function updateText(values) {
+        const n = values.length;
+        const total = sum(values);
+        const lambdaHat = total / n;
+        const variance = sampleVariance(values, lambdaHat);
+        const difference = lambdaHat - ORIGINAL_MEAN;
+
+        nStat.textContent = String(n);
+        sumStat.textContent = String(total);
+        varianceStat.textContent = fixed(variance);
+        mleStat.textContent = fixed(lambdaHat);
+        if (total === 0) {
+          formulaDetail.innerHTML = `For the current data: L(λ) = e<sup>−${n}λ</sup>. It decreases for λ &gt; 0, so its maximum is at the boundary λ̂ = 0.`;
+          sensitivityNote.innerHTML = `<strong>Boundary case.</strong> With every count equal to zero, ℓ′(λ) = −${n} for λ &gt; 0. There is no interior score-equation solution; the maximum is λ̂ = 0. Raising one count to 1 would move λ̂ to 1/${n} ≈ ${fixed(1 / n, 4)}.`;
+        } else {
+          formulaDetail.innerHTML = `For the current data: L(λ) ∝ e<sup>−${n}λ</sup>λ<sup>${total}</sup>, so λ̂ = ${total}/${n} = ${fixed(lambdaHat)}.`;
+          sensitivityNote.innerHTML = `<strong>Why the mean?</strong> The score equation is ${total}/λ − ${n} = 0. With n = ${n} fixed, adding 1 to one count raises λ̂ by exactly 1/${n} ≈ ${fixed(1 / n, 4)}.`;
+        }
+
+        if (lastChangedIndex !== null) {
+          const newValue = values[lastChangedIndex];
+          const delta = newValue - lastChangedFrom;
+          const sign = delta >= 0 ? "+" : "−";
+          changeNote.textContent = `Square ${lastChangedIndex + 1}: ${lastChangedFrom} → ${newValue} · Δλ̂ = ${sign}${fixed(Math.abs(delta / n), 3)} · versus original ${difference >= 0 ? "+" : "−"}${fixed(Math.abs(difference), 3)}`;
+        } else if (Math.abs(difference) < 1e-12) {
+          changeNote.textContent = "Original asbestos data · Poisson mean and variance are both λ.";
+        } else {
+          changeNote.textContent = `Restored original estimate · previous λ̂ = ${previousEstimate === null ? fixed(lambdaHat) : fixed(previousEstimate)}`;
+        }
+      }
+
+      function render() {
+        const lambdaHat = mean(currentData);
+        updateText(currentData);
+        drawHistogram(currentData, lambdaHat);
+        drawCurve(likelihoodSvg, currentData, "likelihood", previousEstimate);
+        drawCurve(logLikelihoodSvg, currentData, "logLikelihood", previousEstimate);
+      }
+
+      buildTable();
+      resetButton.addEventListener("click", resetData);
+      render();
+    })();
+  </script>
+</body>
+</html>
