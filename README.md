@@ -8,6 +8,8 @@ This folder contains interactive, browser-based lessons designed to build intuit
 
 - **`MLE_Poisson_data_sensitivity.html`** — Develops the Poisson maximum likelihood estimator from asbestos-fiber counts observed in 23 grid squares. Users can edit the data table and see the maximum likelihood estimate, observed-count histogram, fitted probability mass function, likelihood, and log-likelihood update together in real time.
 
+- **`Bayesian_Poisson_Gamma_Updating.html`** — Demonstrates sequential Bayesian updating for asbestos-fiber counts observed in 23 microscope grid squares. A slider reveals 0–23 observations while two different gamma priors update in juxtaposed, fixed-axis panels, showing how prior assumptions influence early inference and how the posterior distributions increasingly agree as evidence accumulates.
+
 - **`Estimator_Sampling_Distribution_Uniform.html`** — Introduces sampling distributions through estimation of the endpoint θ in a Uniform(0, θ) population. A guided simulation compares `2X̄` and the sample maximum across repeated samples, then relates their empirical histograms to theoretical density, bias, and variance.
 
 - **`Confidence_Interval_Normal.html`** — Demonstrates repeated-sample confidence intervals for the mean of a Normal population. It constructs the interval `X̄ ± 1.96 S/√n` for 100 samples, displays the intervals beside the changing sample histogram, and tallies how often they contain the true mean.

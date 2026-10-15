@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive comparison of sequential Bayesian updating for a Poisson model under two gamma priors.">
+  <title>Bayesian Poisson Updating</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #0b1f33;
+      --ink-soft: #526579;
+      --paper: #f5f7fa;
+      --surface: #ffffff;
+      --surface-soft: #edf2f7;
+      --oxford: #002147;
+      --oxford-deep: #00152e;
+      --blue: #3973a1;
+      --blue-soft: #dce8f2;
+      --line: #d7e0e8;
+      --grid: #e9eef3;
+      --accent: #a33b49;
+      --accent-soft: #f6e9eb;
+      --focus: #1f6fa8;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    input,
+    output { font: inherit; }
+
+    input:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px var(--focus);
+    }
+
+    h1,
+    h2,
+    p { margin-top: 0; }
+
+    [hidden] { display: none !important; }
+
+    .page-shell {
+      width: min(1420px, 100%);
+      margin: 0 auto;
+      padding: clamp(22px, 3.5vw, 44px) clamp(13px, 3vw, 38px) 34px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 18px;
+      padding-bottom: 18px;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin-bottom: 8px;
+      color: var(--oxford);
+      font-size: clamp(2rem, 4.1vw, 3.5rem);
+      font-weight: 770;
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+
+    .hero p {
+      max-width: 790px;
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: clamp(0.92rem, 1.4vw, 1.04rem);
+    }
+
+    .source-tag {
+      margin-bottom: 2px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .intro-card,
+    .experiment,
+    .chart-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .intro-card {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.78fr) minmax(500px, 1.45fr);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .context,
+    .model { padding: 16px 18px; }
+
+    .context {
+      border-right: 1px solid var(--line);
+      background: var(--surface-soft);
+    }
+
+    .eyebrow {
+      margin-bottom: 5px;
+      color: var(--blue);
+      font-size: 0.68rem;
+      font-weight: 780;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .intro-card h2,
+    .experiment h2,
+    .chart-panel h2 {
+      margin-bottom: 5px;
+      color: var(--oxford);
+      font-size: 1rem;
+      font-weight: 750;
+      letter-spacing: -0.015em;
+    }
+
+    .intro-card p,
+    .section-note,
+    .chart-caption {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+    }
+
+    .formula-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 7px 25px;
+      margin-top: 8px;
+      color: var(--oxford);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(0.96rem, 1.35vw, 1.12rem);
+    }
+
+    .formula-row strong { color: var(--accent); }
+
+    .parameter-note {
+      margin-top: 7px;
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+    }
+
+    .experiment {
+      margin-bottom: 12px;
+      padding: 15px 16px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.75fr) minmax(420px, 1.25fr);
+      align-items: center;
+      gap: 18px;
+    }
+
+    .slider-block { min-width: 0; }
+
+    .slider-label {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 5px;
+      color: var(--oxford);
+      font-size: 0.78rem;
+      font-weight: 730;
+    }
+
+    .slider-label output {
+      color: var(--accent);
+      font-size: 0.94rem;
+      font-weight: 780;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      min-height: 30px;
+      margin: 0;
+      accent-color: var(--oxford);
+      cursor: pointer;
+    }
+
+    .range-ends {
+      display: flex;
+      justify-content: space-between;
+      color: var(--ink-soft);
+      font-size: 0.67rem;
+    }
+
+    .update-message {
+      min-height: 48px;
+      margin: 0;
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--ink-soft);
+      font-size: 0.76rem;
+    }
+
+    .update-message strong { color: var(--oxford); }
+
+    .stream-heading {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 5px 12px;
+      margin-top: 13px;
+      margin-bottom: 7px;
+    }
+
+    .stream-heading h2 { margin-bottom: 0; }
+
+    .data-stream {
+      display: grid;
+      grid-template-columns: repeat(23, minmax(38px, 1fr));
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .data-point {
+      display: grid;
+      min-width: 0;
+      min-height: 46px;
+      place-items: center;
+      align-content: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface-soft);
+      color: #8797a6;
+      transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+
+    .data-point.observed {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: var(--oxford);
+    }
+
+    .data-point.latest {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 -3px 0 var(--accent);
+    }
+
+    .point-index {
+      color: inherit;
+      font-size: 0.56rem;
+      font-weight: 700;
+      line-height: 1;
+      opacity: 0.82;
+    }
+
+    .point-value {
+      margin-top: 3px;
+      font-size: 0.78rem;
+      font-weight: 780;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .summary-banner {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(105px, 1fr));
+      gap: 8px 18px;
+      min-height: 54px;
+      margin-bottom: 12px;
+      padding: 9px 13px;
+      border-radius: 9px;
+      background: var(--oxford);
+      color: #fff;
+    }
+
+    .stat-label {
+      display: block;
+      color: #bcd0e0;
+      font-size: 0.61rem;
+      font-weight: 700;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      display: block;
+      margin-top: 1px;
+      font-size: 0.9rem;
+      font-weight: 760;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-detail {
+      display: block;
+      margin-top: 1px;
+      color: #bcd0e0;
+      font-size: 0.64rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .comparison-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      justify-content: space-between;
+      gap: 5px 18px;
+      margin: 0 2px 8px;
+    }
+
+    .comparison-head h2 {
+      margin-bottom: 2px;
+      color: var(--oxford);
+      font-size: 1.08rem;
+      letter-spacing: -0.015em;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .chart-panel { padding: 14px 16px 11px; }
+
+    .chart-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: start;
+      justify-content: space-between;
+      gap: 7px 18px;
+      margin-bottom: 3px;
+    }
+
+    .chart-head h2 { margin-bottom: 1px; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px 16px;
+      color: var(--ink-soft);
+      font-size: 0.7rem;
+    }
+
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+
+    .legend-line {
+      width: 21px;
+      height: 0;
+      border-top: 2px solid var(--oxford);
+    }
+
+    .legend-line.prior {
+      border-color: var(--blue);
+      border-top-style: dashed;
+    }
+
+    .chart-wrap { width: 100%; min-height: 300px; }
+
+    .density-chart {
+      display: block;
+      width: 100%;
+      overflow: visible;
+    }
+
+    .grid-line { stroke: var(--grid); stroke-width: 1; }
+    .axis { stroke: #8294a5; stroke-width: 1; }
+    .tick-text { fill: var(--ink-soft); font-size: 11px; }
+    .axis-label { fill: var(--ink-soft); font-size: 11px; font-weight: 680; }
+    .prior-area { fill: var(--blue-soft); opacity: 0.4; }
+    .posterior-area { fill: var(--accent-soft); opacity: 0.7; }
+    .prior-curve { fill: none; stroke: var(--blue); stroke-width: 2.3; stroke-dasharray: 7 5; }
+    .posterior-curve { fill: none; stroke: var(--oxford); stroke-width: 2.8; }
+    .prior-mean { stroke: var(--blue); stroke-width: 1.3; stroke-dasharray: 3 4; }
+    .posterior-mean { stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 5 4; }
+    .mean-label { font-size: 11px; font-weight: 730; }
+    .prior-label { fill: var(--blue); }
+    .posterior-label { fill: var(--accent); }
+
+    .chart-caption {
+      margin: 3px 2px 0;
+      text-align: center;
+    }
+
+    .insight {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 9px;
+      background: var(--blue-soft);
+      color: var(--ink-soft);
+      font-size: 0.76rem;
+    }
+
+    .insight strong { color: var(--oxford); }
+
+    .insight-mark {
+      display: grid;
+      width: 25px;
+      height: 25px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--oxford);
+      color: #fff;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1100px) {
+      .data-stream { grid-template-columns: repeat(12, minmax(42px, 1fr)); }
+      .summary-banner { grid-template-columns: repeat(3, minmax(90px, 1fr)); }
+    }
+
+    @media (max-width: 980px) {
+      .chart-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 820px) {
+      .intro-card,
+      .control-row { grid-template-columns: 1fr; }
+      .context { border-right: 0; border-bottom: 1px solid var(--line); }
+      .data-stream { grid-template-columns: repeat(auto-fit, minmax(44px, 1fr)); }
+      .summary-banner { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 540px) {
+      .page-shell { padding-inline: 11px; }
+      .hero { grid-template-columns: 1fr; }
+      .source-tag { justify-self: start; }
+      .summary-banner { grid-template-columns: repeat(2, 1fr); }
+      .data-stream { grid-template-columns: repeat(6, 1fr); }
+      .legend { width: 100%; }
+      .insight { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+
+    @media (pointer: coarse) {
+      input[type="range"] { min-height: 44px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <div>
+        <h1>Bayesian updating, one count at a time</h1>
+        <p>Reveal the asbestos-fiber counts in sequence and compare how two gamma priors become Poisson-model posteriors.</p>
+      </div>
+      <div class="source-tag">Poisson–gamma model</div>
+    </header>
+
+    <section class="intro-card" aria-labelledby="model-title">
+      <div class="context">
+        <p class="eyebrow">The data and the question</p>
+        <h2 id="model-title">Learning the expected count λ</h2>
+        <p>A study counted asbestos fibers in each of 23 grid squares on a filter. Let λ denote the unknown expected number of fibers per square. Conditional on λ, the counts are modeled as independent Poisson observations with common rate λ. A gamma distribution represents uncertainty about λ before the data are observed; the two priors below express contrasting starting beliefs.</p>
+      </div>
+      <div class="model">
+        <p class="eyebrow">Poisson likelihood + two gamma priors</p>
+        <div class="formula-row">
+          <span>X<sub>1</sub>, …, X<sub>23</sub> | Λ = λ ∼ Poisson(λ), independently and identically distributed</span>
+          <span>Λ ∼ Gamma(a, b)</span>
+        </div>
+        <div class="formula-row">
+          <strong>Posterior ∝ likelihood × prior</strong>
+          <span>Prior A: Gamma(9, 0.6)</span>
+          <span>Prior B: Gamma(4, 2/15)</span>
+          <span>Posterior: Gamma(a + S<sub>k</sub>, b + k)</span>
+        </div>
+        <p class="parameter-note">Conditional on λ, the counts are assumed independent with the same rate. Gamma uses the shape–rate parameterization; after k squares, S<sub>k</sub> is the sum of the observed counts. Prior A has mean 15 and standard deviation 5, while the broader Prior B has mean 30 and standard deviation 15. Comparing them shows how prior assumptions influence early inference and how shared data pull the posteriors together.</p>
+      </div>
+    </section>
+
+    <section class="experiment" aria-labelledby="stream-title">
+      <div class="control-row">
+        <div class="slider-block">
+          <label class="slider-label" for="data-slider">
+            <span>Number of data points revealed</span>
+            <output id="slider-output" for="data-slider">0 of 23</output>
+          </label>
+          <input id="data-slider" type="range" min="0" max="23" step="1" value="0" aria-describedby="slider-help">
+          <div class="range-ends" id="slider-help"><span>0 · prior only</span><span>23 · all observations</span></div>
+        </div>
+        <p class="update-message" id="update-message" aria-live="polite"><strong>Before observing data:</strong> each posterior equals its prior—Gamma(9, 0.6) for A and Gamma(4, 2/15) for B.</p>
+      </div>
+
+      <div class="stream-heading">
+        <h2 id="stream-title">Data stream</h2>
+        <p class="section-note">Filled cells have entered the posterior; the newest observation is underlined.</p>
+      </div>
+      <ol class="data-stream" id="data-stream" aria-label="Sequential asbestos-fiber counts"></ol>
+    </section>
+
+    <section class="summary-banner" aria-label="Current Bayesian update">
+      <div><span class="stat-label">Observed</span><span class="stat-value" id="observed-stat">0 / 23</span></div>
+      <div><span class="stat-label">Cumulative sum Sₖ</span><span class="stat-value" id="sum-stat">0</span></div>
+      <div><span class="stat-label">Sample mean</span><span class="stat-value" id="sample-mean-stat">—</span></div>
+      <div><span class="stat-label">Posterior A</span><span class="stat-value">mean <span id="posterior-a-mean-stat">15.000</span></span><span class="stat-detail">standard deviation <span id="posterior-a-sd-stat">5.000</span></span></div>
+      <div><span class="stat-label">Posterior B</span><span class="stat-value">mean <span id="posterior-b-mean-stat">30.000</span></span><span class="stat-detail">standard deviation <span id="posterior-b-sd-stat">15.000</span></span></div>
+      <div><span class="stat-label">Posterior mean gap</span><span class="stat-value" id="posterior-gap-stat">15.000</span><span class="stat-detail">absolute difference</span></div>
+    </section>
+
+    <section aria-labelledby="comparison-title">
+      <div class="comparison-head">
+        <div>
+          <h2 id="comparison-title">The same data update two different priors</h2>
+          <p class="section-note">Both panels use identical fixed axes, so their posterior movement and concentration can be compared directly.</p>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <article class="chart-panel" aria-labelledby="chart-a-title">
+          <div class="chart-head">
+            <div>
+              <h2 id="chart-a-title">Prior A · centered at 15</h2>
+              <p class="section-note" id="posterior-a-formula">Current posterior A: Gamma(9, 0.6)</p>
+            </div>
+            <div class="legend" aria-label="Prior A distribution legend">
+              <span class="legend-item" id="prior-a-legend-item"><span class="legend-line prior"></span><span id="prior-a-legend">Prior A = posterior A</span></span>
+              <span class="legend-item" id="posterior-a-legend-item" hidden><span class="legend-line"></span><span id="posterior-a-legend">Posterior A</span></span>
+            </div>
+          </div>
+          <div class="chart-wrap" id="chart-wrap-a">
+            <svg class="density-chart" id="density-chart-a" role="img" aria-labelledby="density-a-title density-a-desc">
+              <title id="density-a-title">Prior A and posterior A densities for the Poisson rate</title>
+              <desc id="density-a-desc">Before any data, posterior A equals prior A, a gamma distribution with mean 15 and standard deviation 5.</desc>
+            </svg>
+          </div>
+          <p class="chart-caption">Prior A: Gamma(9, 0.6), mean 15, standard deviation 5.</p>
+        </article>
+
+        <article class="chart-panel" aria-labelledby="chart-b-title">
+          <div class="chart-head">
+            <div>
+              <h2 id="chart-b-title">Prior B · broader, centered at 30</h2>
+              <p class="section-note" id="posterior-b-formula">Current posterior B: Gamma(4, 0.1333)</p>
+            </div>
+            <div class="legend" aria-label="Prior B distribution legend">
+              <span class="legend-item" id="prior-b-legend-item"><span class="legend-line prior"></span><span id="prior-b-legend">Prior B = posterior B</span></span>
+              <span class="legend-item" id="posterior-b-legend-item" hidden><span class="legend-line"></span><span id="posterior-b-legend">Posterior B</span></span>
+            </div>
+          </div>
+          <div class="chart-wrap" id="chart-wrap-b">
+            <svg class="density-chart" id="density-chart-b" role="img" aria-labelledby="density-b-title density-b-desc">
+              <title id="density-b-title">Prior B and posterior B densities for the Poisson rate</title>
+              <desc id="density-b-desc">Before any data, posterior B equals prior B, a gamma distribution with mean 30 and standard deviation 15.</desc>
+            </svg>
+          </div>
+          <p class="chart-caption">Prior B: Gamma(4, 2/15), mean 30, standard deviation 15.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="insight" aria-label="Key Bayesian insight">
+      <span class="insight-mark">×</span>
+      <div><strong>The same likelihood pulls different priors toward the same evidence.</strong> A new count x adds x to each posterior shape and adds 1 to each posterior rate. The early posteriors can differ substantially, but the two distributions increasingly agree as observations accumulate.</div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const DATA = [31, 29, 19, 18, 31, 28, 34, 27, 34, 30, 16, 18, 26, 27, 27, 18, 24, 22, 28, 24, 21, 17, 24];
+      const PRIORS = {
+        a: { name: "A", shape: 9, rate: 0.6 },
+        b: { name: "B", shape: 4, rate: 2 / 15 }
+      };
+      const X_DOMAIN = [0, 70];
+      const Y_DOMAIN = [0, 0.42];
+      const NS = "http://www.w3.org/2000/svg";
+
+      const slider = document.getElementById("data-slider");
+      const sliderOutput = document.getElementById("slider-output");
+      const updateMessage = document.getElementById("update-message");
+      const dataStream = document.getElementById("data-stream");
+      const observedStat = document.getElementById("observed-stat");
+      const sumStat = document.getElementById("sum-stat");
+      const sampleMeanStat = document.getElementById("sample-mean-stat");
+      const posteriorGapStat = document.getElementById("posterior-gap-stat");
+      const views = {
+        a: {
+          meanStat: document.getElementById("posterior-a-mean-stat"),
+          sdStat: document.getElementById("posterior-a-sd-stat"),
+          formula: document.getElementById("posterior-a-formula"),
+          priorLegend: document.getElementById("prior-a-legend"),
+          posteriorLegendItem: document.getElementById("posterior-a-legend-item"),
+          posteriorLegend: document.getElementById("posterior-a-legend"),
+          chartWrap: document.getElementById("chart-wrap-a"),
+          chart: document.getElementById("density-chart-a")
+        },
+        b: {
+          meanStat: document.getElementById("posterior-b-mean-stat"),
+          sdStat: document.getElementById("posterior-b-sd-stat"),
+          formula: document.getElementById("posterior-b-formula"),
+          priorLegend: document.getElementById("prior-b-legend"),
+          posteriorLegendItem: document.getElementById("posterior-b-legend-item"),
+          posteriorLegend: document.getElementById("posterior-b-legend"),
+          chartWrap: document.getElementById("chart-wrap-b"),
+          chart: document.getElementById("density-chart-b")
+        }
+      };
+
+      let currentK = 0;
+      let resizeFrame = null;
+
+      function svgElement(name, attributes = {}, text = "") {
+        const node = document.createElementNS(NS, name);
+        Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, String(value)));
+        if (text !== "") node.textContent = text;
+        return node;
+      }
+
+      function append(parent, name, attributes = {}, text = "") {
+        const node = svgElement(name, attributes, text);
+        parent.appendChild(node);
+        return node;
+      }
+
+      function format(value, digits = 3) {
+        return Number(value).toFixed(digits).replace("-", "−");
+      }
+
+      function buildStream() {
+        const fragment = document.createDocumentFragment();
+        DATA.forEach((value, index) => {
+          const item = document.createElement("li");
+          item.className = "data-point";
+          item.dataset.index = String(index);
+          const number = document.createElement("span");
+          number.className = "point-index";
+          number.textContent = String(index + 1);
+          const count = document.createElement("span");
+          count.className = "point-value";
+          count.textContent = "—";
+          item.append(number, count);
+          fragment.appendChild(item);
+        });
+        dataStream.appendChild(fragment);
+      }
+
+      function cumulativeSum(k) {
+        let total = 0;
+        for (let index = 0; index < k; index += 1) total += DATA[index];
+        return total;
+      }
+
+      function logGamma(z) {
+        const coefficients = [
+          676.5203681218851,
+          -1259.1392167224028,
+          771.3234287776531,
+          -176.6150291621406,
+          12.507343278686905,
+          -0.13857109526572012,
+          9.984369578019572e-6,
+          1.5056327351493116e-7
+        ];
+        let adjusted = z - 1;
+        let series = 0.9999999999998099;
+        for (let index = 0; index < coefficients.length; index += 1) {
+          series += coefficients[index] / (adjusted + index + 1);
+        }
+        const t = adjusted + coefficients.length - 0.5;
+        return 0.5 * Math.log(2 * Math.PI) + (adjusted + 0.5) * Math.log(t) - t + Math.log(series);
+      }
+
+      function gammaDensity(lambda, shape, rate) {
+        if (lambda <= 0) return 0;
+        const logDensity = shape * Math.log(rate) - logGamma(shape) + (shape - 1) * Math.log(lambda) - rate * lambda;
+        return Math.exp(logDensity);
+      }
+
+      function clearChart(chart) {
+        Array.from(chart.children).forEach((child) => {
+          const tag = child.tagName.toLowerCase();
+          if (tag !== "title" && tag !== "desc") child.remove();
+        });
+      }
+
+      function pathFrom(points, xScale, yScale) {
+        return points.map((point, index) => `${index === 0 ? "M" : "L"}${xScale(point.x).toFixed(2)},${yScale(point.y).toFixed(2)}`).join(" ");
+      }
+
+      function areaFrom(points, xScale, yScale, baseline) {
+        const line = pathFrom(points, xScale, yScale);
+        return `${line} L${xScale(points[points.length - 1].x).toFixed(2)},${baseline.toFixed(2)} L${xScale(points[0].x).toFixed(2)},${baseline.toFixed(2)} Z`;
+      }
+
+      function drawChart(prior, view) {
+        const chart = view.chart;
+        clearChart(chart);
+
+        const width = Math.max(290, Math.round(view.chartWrap.clientWidth));
+        const compact = width < 560;
+        const height = compact ? 310 : 370;
+        const margin = { left: compact ? 54 : 66, right: compact ? 14 : 28, top: 29, bottom: 50 };
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+        chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        chart.style.height = `${height}px`;
+
+        const xScale = (value) => margin.left + ((value - X_DOMAIN[0]) / (X_DOMAIN[1] - X_DOMAIN[0])) * innerWidth;
+        const yScale = (value) => margin.top + innerHeight - ((value - Y_DOMAIN[0]) / (Y_DOMAIN[1] - Y_DOMAIN[0])) * innerHeight;
+        const xTicks = compact ? [0, 20, 40, 60] : [0, 10, 20, 30, 40, 50, 60, 70];
+        const yTicks = [0, 0.1, 0.2, 0.3, 0.4];
+
+        yTicks.forEach((value) => {
+          const y = yScale(value);
+          append(chart, "line", { x1: margin.left, y1: y, x2: width - margin.right, y2: y, class: "grid-line" });
+          append(chart, "text", { x: margin.left - 8, y: y + 4, "text-anchor": "end", class: "tick-text" }, value.toFixed(1));
+        });
+
+        xTicks.forEach((value) => {
+          const x = xScale(value);
+          append(chart, "line", { x1: x, y1: margin.top + innerHeight, x2: x, y2: margin.top + innerHeight + 5, class: "axis" });
+          append(chart, "text", { x, y: margin.top + innerHeight + 19, "text-anchor": "middle", class: "tick-text" }, String(value));
+        });
+
+        append(chart, "line", { x1: margin.left, y1: margin.top + innerHeight, x2: width - margin.right, y2: margin.top + innerHeight, class: "axis" });
+        append(chart, "line", { x1: margin.left, y1: margin.top, x2: margin.left, y2: margin.top + innerHeight, class: "axis" });
+        append(chart, "text", { x: margin.left + innerWidth / 2, y: height - 7, "text-anchor": "middle", class: "axis-label" }, "Expected fibers per grid square, λ");
+        append(chart, "text", { x: 13, y: margin.top + innerHeight / 2, "text-anchor": "middle", class: "axis-label", transform: `rotate(-90 13 ${margin.top + innerHeight / 2})` }, "Probability density");
+
+        const total = cumulativeSum(currentK);
+        const posteriorShape = prior.shape + total;
+        const posteriorRate = prior.rate + currentK;
+        const posteriorMean = posteriorShape / posteriorRate;
+        const priorMean = prior.shape / prior.rate;
+        const priorPoints = [];
+        const posteriorPoints = [];
+        const samples = 520;
+
+        for (let index = 0; index <= samples; index += 1) {
+          const lambda = X_DOMAIN[0] + ((X_DOMAIN[1] - X_DOMAIN[0]) * index) / samples;
+          priorPoints.push({ x: lambda, y: gammaDensity(lambda, prior.shape, prior.rate) });
+          posteriorPoints.push({ x: lambda, y: gammaDensity(lambda, posteriorShape, posteriorRate) });
+        }
+
+        const baseline = yScale(0);
+        append(chart, "path", { d: areaFrom(priorPoints, xScale, yScale, baseline), class: "prior-area" });
+        append(chart, "path", { d: areaFrom(posteriorPoints, xScale, yScale, baseline), class: "posterior-area" });
+        append(chart, "path", { d: pathFrom(posteriorPoints, xScale, yScale), class: "posterior-curve" });
+        append(chart, "path", { d: pathFrom(priorPoints, xScale, yScale), class: "prior-curve" });
+
+        if (currentK === 0) {
+          const x = xScale(priorMean);
+          const anchor = x > width - margin.right - 125 ? "end" : "start";
+          append(chart, "line", { x1: x, y1: margin.top, x2: x, y2: baseline, class: "posterior-mean" });
+          append(chart, "text", {
+            x: anchor === "end" ? x - 6 : x + 6,
+            y: margin.top + 13,
+            "text-anchor": anchor,
+            class: "mean-label posterior-label"
+          }, `Both means = ${format(priorMean)}`);
+        } else {
+          const priorX = xScale(priorMean);
+          const posteriorX = xScale(posteriorMean);
+          const priorAnchor = priorX < margin.left + 125 ? "start" : "end";
+          append(chart, "line", { x1: priorX, y1: margin.top, x2: priorX, y2: baseline, class: "prior-mean" });
+          append(chart, "line", { x1: posteriorX, y1: margin.top, x2: posteriorX, y2: baseline, class: "posterior-mean" });
+          append(chart, "text", {
+            x: priorAnchor === "end" ? priorX - 6 : priorX + 6,
+            y: margin.top + 13,
+            "text-anchor": priorAnchor,
+            class: "mean-label prior-label"
+          }, `Prior mean ${format(priorMean)}`);
+          const posteriorAnchor = posteriorX > width - margin.right - 135 ? "end" : "start";
+          append(chart, "text", {
+            x: posteriorAnchor === "end" ? posteriorX - 6 : posteriorX + 6,
+            y: margin.top + 29,
+            "text-anchor": posteriorAnchor,
+            class: "mean-label posterior-label"
+          }, `Posterior mean ${format(posteriorMean)}`);
+        }
+
+        const description = chart.querySelector("desc");
+        const priorSd = Math.sqrt(prior.shape) / prior.rate;
+        description.textContent = currentK === 0
+          ? `Before any data, posterior ${prior.name} equals prior ${prior.name}. Both have mean ${format(priorMean)} and standard deviation ${format(priorSd)}.`
+          : `After ${currentK} observations with cumulative count ${total}, prior ${prior.name} has mean ${format(priorMean)} while posterior ${prior.name} has mean ${format(posteriorMean)} and standard deviation ${format(Math.sqrt(posteriorShape) / posteriorRate)}.`;
+      }
+
+      function drawCharts() {
+        drawChart(PRIORS.a, views.a);
+        drawChart(PRIORS.b, views.b);
+      }
+
+      function updateStream(k) {
+        Array.from(dataStream.children).forEach((item, index) => {
+          const observed = index < k;
+          const latest = index === k - 1;
+          item.classList.toggle("observed", observed);
+          item.classList.toggle("latest", latest);
+          item.querySelector(".point-value").textContent = observed ? String(DATA[index]) : "—";
+          item.setAttribute("aria-label", observed
+            ? `Grid square ${index + 1}, observed fiber count ${DATA[index]}${latest ? ", newest observation" : ""}`
+            : `Grid square ${index + 1}, not yet observed`);
+        });
+      }
+
+      function update() {
+        const requested = Number(slider.value);
+        currentK = Math.max(0, Math.min(DATA.length, Math.round(requested)));
+        slider.value = String(currentK);
+        slider.setAttribute("aria-valuetext", currentK === 0 ? "No data points revealed" : `${currentK} of ${DATA.length} data points revealed`);
+
+        const total = cumulativeSum(currentK);
+        const posteriorA = {
+          shape: PRIORS.a.shape + total,
+          rate: PRIORS.a.rate + currentK
+        };
+        const posteriorB = {
+          shape: PRIORS.b.shape + total,
+          rate: PRIORS.b.rate + currentK
+        };
+        posteriorA.mean = posteriorA.shape / posteriorA.rate;
+        posteriorA.sd = Math.sqrt(posteriorA.shape) / posteriorA.rate;
+        posteriorB.mean = posteriorB.shape / posteriorB.rate;
+        posteriorB.sd = Math.sqrt(posteriorB.shape) / posteriorB.rate;
+
+        sliderOutput.textContent = `${currentK} of ${DATA.length}`;
+        observedStat.textContent = `${currentK} / ${DATA.length}`;
+        sumStat.textContent = String(total);
+        sampleMeanStat.textContent = currentK === 0 ? "—" : format(total / currentK);
+        views.a.meanStat.textContent = format(posteriorA.mean);
+        views.a.sdStat.textContent = format(posteriorA.sd);
+        views.b.meanStat.textContent = format(posteriorB.mean);
+        views.b.sdStat.textContent = format(posteriorB.sd);
+        posteriorGapStat.textContent = format(Math.abs(posteriorA.mean - posteriorB.mean));
+
+        views.a.formula.textContent = `Current posterior A: Gamma(${posteriorA.shape}, ${format(posteriorA.rate, 1)})`;
+        views.b.formula.textContent = `Current posterior B: Gamma(${posteriorB.shape}, ${format(posteriorB.rate, 4)})`;
+        views.a.priorLegend.textContent = currentK === 0 ? "Prior A = posterior A" : "Prior A";
+        views.b.priorLegend.textContent = currentK === 0 ? "Prior B = posterior B" : "Prior B";
+        views.a.posteriorLegendItem.hidden = currentK === 0;
+        views.b.posteriorLegendItem.hidden = currentK === 0;
+        views.a.posteriorLegend.textContent = `Posterior A Gamma(${posteriorA.shape}, ${format(posteriorA.rate, 1)})`;
+        views.b.posteriorLegend.textContent = `Posterior B Gamma(${posteriorB.shape}, ${format(posteriorB.rate, 4)})`;
+
+        if (currentK === 0) {
+          updateMessage.innerHTML = "<strong>Before observing data:</strong> each posterior equals its prior—Gamma(9, 0.6) for A and Gamma(4, 2/15) for B.";
+        } else {
+          const latest = DATA[currentK - 1];
+          updateMessage.innerHTML = `<strong>Observation ${currentK}: x<sub>${currentK}</sub> = ${latest}.</strong> The shared update gives posterior A = Gamma(${posteriorA.shape}, ${format(posteriorA.rate, 1)}) and posterior B = Gamma(${posteriorB.shape}, ${format(posteriorB.rate, 4)}).`;
+        }
+
+        updateStream(currentK);
+        drawCharts();
+      }
+
+      buildStream();
+      slider.addEventListener("input", update);
+
+      if ("ResizeObserver" in window) {
+        const chartResizeObserver = new ResizeObserver(() => {
+          cancelAnimationFrame(resizeFrame);
+          resizeFrame = requestAnimationFrame(drawCharts);
+        });
+        chartResizeObserver.observe(views.a.chartWrap);
+        chartResizeObserver.observe(views.b.chartWrap);
+      }
+
+      update();
+    })();
+  </script>
+</body>
+</html>
