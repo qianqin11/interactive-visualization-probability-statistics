@@ -14,6 +14,8 @@ This folder contains interactive, browser-based lessons designed to build intuit
 
 - **`Confidence_Interval_Normal.html`** — Demonstrates repeated-sample confidence intervals for the mean of a Normal population. It constructs the interval `X̄ ± 1.96 S/√n` for 100 samples, displays the intervals beside the changing sample histogram, and tallies how often they contain the true mean.
 
+- **`Power_two_sample_mean_test.html`** — Explores the large-sample normal approximation to the power of a two-sided pooled two-sample mean test. Sliders control the true mean difference, significance level, common standard deviation, and both sample sizes. Null and alternative densities, rejection-tail areas, power, and missed-difference probability update together, with a self-contained explanation of the model and test.
+
 - **`Mean_Sampling_Distribution_Large_Sample.html`** — Builds sampling distributions of the mean for `n = 1, 10, 100`. Learners generate the first three repetitions manually, then watch 197 more accumulate in real time while current-sample histograms, recorded means, Normal approximations, and convergence diagnostics update.
 
 - **`README.md`** — Describes the purpose of the project and provides this catalog of its documents.
